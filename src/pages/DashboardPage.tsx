@@ -31,6 +31,7 @@ import {
   DollarSign,
   ShieldAlert,
   Calculator,
+  Trash2,
 } from 'lucide-react';
 import { NavTab } from '../components/Sidebar';
 import { CategoryIcon, CATEGORY_COLORS } from '../components/CategoryIcon';
@@ -792,90 +793,146 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <p className="mt-0.5">Click "Add Expense" to log grocery, food, or petrol expenses.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-neutral-100 dark:border-neutral-800 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-                  <th className="py-3 px-3">Expense Item</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Payment Method</th>
-                  <th className="py-3 px-3 text-right">Amount</th>
-                  <th className="py-3 px-3 text-center">Status</th>
-                  <th className="py-3 px-2 text-center"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
-                {recentExpenses.map((exp) => {
-                  const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
-                  return (
-                    <tr
-                      key={exp.id}
-                      className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 transition group"
-                    >
-                      {/* Name with category icon */}
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`p-2 rounded-xl ${color.bg} ${color.text} shrink-0`}>
-                            <CategoryIcon category={exp.category} className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <span className="font-semibold text-neutral-900 dark:text-white block text-xs">
-                              {exp.name}
-                            </span>
-                            {exp.notes && (
-                              <span className="text-[10px] text-neutral-400 block truncate max-w-xs">
-                                {exp.notes}
-                              </span>
-                            )}
-                          </div>
+          <>
+            {/* Mobile Cards View (phones < md) */}
+            <div className="block md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+              {recentExpenses.map((exp) => {
+                const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
+                return (
+                  <div key={exp.id} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`p-2.5 rounded-xl ${color.bg} ${color.text} shrink-0`}>
+                        <CategoryIcon category={exp.category} className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-neutral-900 dark:text-white truncate">
+                            {exp.name}
+                          </span>
                         </div>
-                      </td>
+                        <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                          <span>{exp.category}</span>
+                          <span>•</span>
+                          <span className="font-mono">{exp.date}</span>
+                          <span>•</span>
+                          <span className="text-[10px] px-1 py-0.2 bg-neutral-100 dark:bg-neutral-800 rounded">
+                            {exp.paymentMethod}
+                          </span>
+                        </div>
+                        {exp.notes && (
+                          <p className="text-[10px] text-neutral-400 truncate mt-0.5">{exp.notes}</p>
+                        )}
+                      </div>
+                    </div>
 
-                      {/* Category */}
-                      <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-                        {exp.category}
-                      </td>
-
-                      {/* Date */}
-                      <td className="py-3 px-3 text-neutral-500 font-mono whitespace-nowrap">
-                        {exp.date}
-                      </td>
-
-                      {/* Method */}
-                      <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-                        {exp.paymentMethod}
-                      </td>
-
-                      {/* Price */}
-                      <td className="py-3 px-3 text-right font-extrabold text-neutral-900 dark:text-white tabular-nums whitespace-nowrap">
-                        {formatINR(exp.amount)}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3 px-3 text-center whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>Deducted</span>
+                    <div className="text-right shrink-0 flex items-center gap-2">
+                      <div>
+                        <div className="text-sm font-extrabold text-neutral-900 dark:text-white tabular-nums">
+                          {formatINR(exp.amount)}
+                        </div>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium block">
+                          Deducted
                         </span>
-                      </td>
+                      </div>
+                      <button
+                        onClick={() => deleteExpense(exp.id)}
+                        aria-label={`Delete ${exp.name}`}
+                        className="p-2 text-neutral-400 hover:text-rose-600 active:scale-95 transition min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-rose-600" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                      {/* Actions */}
-                      <td className="py-3 px-2 text-center text-neutral-400">
-                        <button
-                          onClick={() => deleteExpense(exp.id)}
-                          title="Delete Expense"
-                          className="p-1 hover:text-rose-600 rounded-md transition"
-                        >
-                          &times;
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+            {/* Desktop / Tablet Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-neutral-100 dark:border-neutral-800 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <th className="py-3 px-3">Expense Item</th>
+                    <th className="py-3 px-3">Category</th>
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Payment Method</th>
+                    <th className="py-3 px-3 text-right">Amount</th>
+                    <th className="py-3 px-3 text-center">Status</th>
+                    <th className="py-3 px-2 text-center"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
+                  {recentExpenses.map((exp) => {
+                    const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
+                    return (
+                      <tr
+                        key={exp.id}
+                        className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 transition group"
+                      >
+                        {/* Name with category icon */}
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`p-2 rounded-xl ${color.bg} ${color.text} shrink-0`}>
+                              <CategoryIcon category={exp.category} className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <span className="font-semibold text-neutral-900 dark:text-white block text-xs">
+                                {exp.name}
+                              </span>
+                              {exp.notes && (
+                                <span className="text-[10px] text-neutral-400 block truncate max-w-xs">
+                                  {exp.notes}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+                          {exp.category}
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3 px-3 text-neutral-500 font-mono whitespace-nowrap">
+                          {exp.date}
+                        </td>
+
+                        {/* Method */}
+                        <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+                          {exp.paymentMethod}
+                        </td>
+
+                        {/* Price */}
+                        <td className="py-3 px-3 text-right font-extrabold text-neutral-900 dark:text-white tabular-nums whitespace-nowrap">
+                          {formatINR(exp.amount)}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>Deducted</span>
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-2 text-center text-neutral-400">
+                          <button
+                            onClick={() => deleteExpense(exp.id)}
+                            title="Delete Expense"
+                            className="p-1 hover:text-rose-600 rounded-md transition"
+                          >
+                            &times;
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

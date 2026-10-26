@@ -217,13 +217,13 @@ export const BudgetsPage: React.FC = () => {
               }`}
             >
               {/* Card Header */}
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className={`p-2 rounded-xl ${color.bg} ${color.text}`}>
+              <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2.5 mb-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`p-2.5 rounded-xl ${color.bg} ${color.text} shrink-0`}>
                     <CategoryIcon category={item.category} className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-neutral-900 dark:text-white truncate">
                       {item.category}
                     </h4>
                     <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -232,16 +232,16 @@ export const BudgetsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-base font-bold text-neutral-900 dark:text-white">
+                <div className="text-left xs:text-right shrink-0 w-full xs:w-auto pt-1 xs:pt-0 border-t xs:border-t-0 border-neutral-100 dark:border-neutral-700/60 flex xs:block justify-between items-center">
+                  <div className="text-sm xs:text-base font-bold text-neutral-900 dark:text-white">
                     {hasBudget ? formatINR(item.budget) : 'Not Set'}
                   </div>
-                  <div className="flex items-center gap-2 justify-end mt-1">
+                  <div className="flex items-center gap-2 justify-end mt-0.5 xs:mt-1">
                     {hasBudget && (
                       <button
                         type="button"
                         onClick={() => handleDeleteBudget(item.category)}
-                        className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-0.5"
+                        className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-0.5 min-h-[30px]"
                         title="Delete this budget limit"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -251,7 +251,7 @@ export const BudgetsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => openSetBudgetModal(item.category, item.budget)}
-                      className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                      className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 min-h-[30px]"
                     >
                       <Edit2 className="w-3 h-3" />
                       <span>{hasBudget ? 'Edit Limit' : '+ Add Limit'}</span>

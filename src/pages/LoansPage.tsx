@@ -422,18 +422,20 @@ export const LoansPage: React.FC = () => {
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-neutral-700/60">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => openEditLoanModal(loan)}
-                          className="p-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                          className="p-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 min-w-[38px] min-h-[38px] flex items-center justify-center transition"
                           title="Edit Loan Details"
+                          aria-label={`Edit ${loan.loanName}`}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setDeletingLoanId(loan.id)}
-                          className="p-1.5 text-neutral-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                          className="p-2 text-neutral-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 min-w-[38px] min-h-[38px] flex items-center justify-center transition"
                           title="Delete Loan"
+                          aria-label={`Delete ${loan.loanName}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -442,9 +444,9 @@ export const LoansPage: React.FC = () => {
                       {loan.status === 'Active' && (
                         <button
                           onClick={() => openPayEmiModal(loan)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-xs transition"
+                          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-xs transition min-h-[38px]"
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           <span>Mark EMI Paid</span>
                         </button>
                       )}
@@ -460,62 +462,98 @@ export const LoansPage: React.FC = () => {
       {/* Payment History View */}
       {activeTab === 'history' && (
         <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-xs overflow-hidden">
-          <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-700 flex items-center justify-between">
-            <h3 className="font-bold text-neutral-900 dark:text-white text-base">
+          <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 dark:border-neutral-700 flex items-center justify-between">
+            <h3 className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base">
               Recorded EMI Payments ({emiPayments.length})
             </h3>
             <span className="text-xs text-neutral-500">
-              Payments log for cash flow verification
+              Payment log
             </span>
           </div>
 
           {emiPayments.length === 0 ? (
-            <div className="py-10 text-center text-xs text-neutral-500">
+            <div className="py-10 text-center text-xs text-neutral-500 px-4">
               No EMI payments recorded yet. Click "Mark EMI Paid" on any active loan to log an installment payment.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
-                    <th className="py-3 px-4">Payment Date</th>
-                    <th className="py-3 px-4">Loan Account</th>
-                    <th className="py-3 px-4">Notes</th>
-                    <th className="py-3 px-4 text-right">Amount Paid</th>
-                    <th className="py-3 px-4 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                  {emiPayments
-                    .sort((a, b) => b.paymentDate.localeCompare(a.paymentDate))
-                    .map((p) => (
-                      <tr key={p.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
-                        <td className="py-3 px-4 font-mono text-neutral-600 dark:text-neutral-400">
-                          {p.paymentDate}
-                        </td>
-                        <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white">
+            <>
+              {/* Mobile Cards for History (< sm) */}
+              <div className="block sm:hidden divide-y divide-neutral-100 dark:divide-neutral-700/60 p-2">
+                {emiPayments
+                  .sort((a, b) => b.paymentDate.localeCompare(a.paymentDate))
+                  .map((p) => (
+                    <div key={p.id} className="py-3 px-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white block truncate">
                           {p.loanName}
-                        </td>
-                        <td className="py-3 px-4 text-neutral-500 truncate max-w-xs">
-                          {p.notes || '-'}
-                        </td>
-                        <td className="py-3 px-4 text-right font-black text-indigo-600 dark:text-indigo-400">
+                        </span>
+                        <span className="text-[11px] text-neutral-400 font-mono block mt-0.5">
+                          Paid on {p.paymentDate}
+                        </span>
+                        {p.notes && (
+                          <span className="text-[10px] text-neutral-500 italic block truncate mt-0.5">{p.notes}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-black text-xs text-indigo-600 dark:text-indigo-400 tabular-nums">
                           {formatINR(p.amount)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => deleteEmiPayment(p.id)}
-                            className="p-1 text-neutral-400 hover:text-rose-600"
-                            title="Delete Payment Record"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+                        </span>
+                        <button
+                          onClick={() => deleteEmiPayment(p.id)}
+                          aria-label="Delete Payment Record"
+                          className="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg min-w-[32px] min-h-[32px] flex items-center justify-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Desktop Table (>= sm) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
+                      <th className="py-3 px-4">Payment Date</th>
+                      <th className="py-3 px-4">Loan Account</th>
+                      <th className="py-3 px-4">Notes</th>
+                      <th className="py-3 px-4 text-right">Amount Paid</th>
+                      <th className="py-3 px-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
+                    {emiPayments
+                      .sort((a, b) => b.paymentDate.localeCompare(a.paymentDate))
+                      .map((p) => (
+                        <tr key={p.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
+                          <td className="py-3 px-4 font-mono text-neutral-600 dark:text-neutral-400">
+                            {p.paymentDate}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white">
+                            {p.loanName}
+                          </td>
+                          <td className="py-3 px-4 text-neutral-500 truncate max-w-xs">
+                            {p.notes || '-'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-black text-indigo-600 dark:text-indigo-400">
+                            {formatINR(p.amount)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => deleteEmiPayment(p.id)}
+                              className="p-1.5 text-neutral-400 hover:text-rose-600 min-w-[32px] min-h-[32px] flex items-center justify-center mx-auto"
+                              title="Delete Payment Record"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}

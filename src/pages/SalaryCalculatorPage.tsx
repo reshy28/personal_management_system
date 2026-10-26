@@ -424,16 +424,16 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
       </div>
 
       {/* Visual Salary Allocation Bar */}
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between text-xs font-semibold">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-2xs space-y-3">
+        <div className="flex flex-col xs:flex-row xs:items-center justify-between text-xs font-semibold gap-1.5">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
             <span className="text-neutral-600 dark:text-neutral-400">
               Deductions: <strong className="text-neutral-900 dark:text-white">{formatINR(totalDeductions)}</strong> ({allocatedPercentage}%)
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
             <span className="text-neutral-600 dark:text-neutral-400">
               Remaining: <strong className="text-neutral-900 dark:text-white">{formatINR(remainingBalance)}</strong> ({remainingPercentage}%)
             </span>
@@ -454,12 +454,12 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
           />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-neutral-400">
-          <span>₹0</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-neutral-400 gap-1">
+          <span className="hidden sm:inline">₹0</span>
           <span className="font-medium text-neutral-600 dark:text-neutral-300">
             Formula: {formatINR(monthlySalary)} - {formatINR(totalDeductions)} = {formatINR(remainingBalance)}
           </span>
-          <span>{formatINR(monthlySalary)}</span>
+          <span className="hidden sm:inline">{formatINR(monthlySalary)}</span>
         </div>
       </div>
 
@@ -901,27 +901,16 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
         />
       )}
 
-      {/* Floating '+' Action Button in the Bottom Left Side Corner */}
-      <div className="fixed bottom-20 left-4 sm:left-6 lg:bottom-8 lg:left-72 z-40">
+      {/* Floating '+' Action Button in the Bottom Right Corner (Icon Only) */}
+      <div className="fixed bottom-20 right-4 sm:right-6 lg:bottom-8 lg:right-8 z-40">
         <button
           type="button"
           onClick={handleOpenAdd}
           aria-label="Add Salary Deduction"
-          title="Add Salary Deduction Sheet"
-          className="group relative flex items-center justify-center gap-2.5 h-13 sm:h-14 px-3.5 sm:px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xl hover:shadow-2xl shadow-emerald-950/20 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/40 border border-emerald-400/30"
+          title="Add Salary Deduction"
+          className="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xl hover:shadow-2xl shadow-emerald-950/20 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/40 border border-emerald-400/30"
         >
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center transition-transform duration-300 group-hover:rotate-90">
-            <Plus className="w-5 h-5 text-white stroke-[3]" />
-          </div>
-          <span className="font-bold text-xs sm:text-sm tracking-wide pr-1 whitespace-nowrap">
-            Add Deduction
-          </span>
-
-          {/* Pulse notification dot */}
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-white dark:border-neutral-900"></span>
-          </span>
+          <Plus className="w-7 h-7 sm:w-8 sm:h-8 text-white stroke-[2.8] transition-transform duration-300 group-hover:rotate-90" />
         </button>
       </div>
     </div>

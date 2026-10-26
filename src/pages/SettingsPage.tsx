@@ -72,10 +72,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Profile & Default Salary Settings */}
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-700 mb-5">
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-700 mb-5 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <User className="w-5 h-5" />
             </div>
             <div>
@@ -89,7 +89,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
           </div>
 
           {isSaved && (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-full">
+            <div className="self-start sm:self-auto flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-full">
               <CheckCircle2 className="w-4 h-4" />
               <span>Saved!</span>
             </div>
@@ -106,7 +106,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
               />
             </div>
 
@@ -115,7 +115,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
                 Default Monthly Salary (₹)
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-neutral-400 font-bold text-sm">
+                <span className="absolute left-3.5 top-3 text-neutral-400 font-bold text-sm">
                   ₹
                 </span>
                 <input
@@ -123,7 +123,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
                   step="any"
                   value={defaultSalary}
                   onChange={(e) => setDefaultSalary(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
+                  className="w-full pl-8 pr-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
                 />
               </div>
               <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -141,7 +141,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
                 type="text"
                 disabled
                 value={user?.email || `Guest (${user?.uid?.substring(0, 8)}...)`}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs bg-neutral-100 dark:bg-neutral-900/50 text-neutral-500 cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs bg-neutral-100 dark:bg-neutral-900/50 text-neutral-500 cursor-not-allowed"
               />
             </div>
 
@@ -153,7 +153,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
                 type="text"
                 disabled
                 value="Indian Rupee (INR - ₹)"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs bg-neutral-100 dark:bg-neutral-900/50 text-neutral-700 dark:text-neutral-300 font-bold cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs bg-neutral-100 dark:bg-neutral-900/50 text-neutral-700 dark:text-neutral-300 font-bold cursor-not-allowed"
               />
               <span className="text-[11px] text-neutral-400 mt-1 block">
                 RupeeTrack strictly operates in Indian Rupees (INR - ₹).
@@ -164,7 +164,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
           <div className="pt-3 flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-xs transition"
+              className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center"
             >
               Update Preferences
             </button>
@@ -173,9 +173,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
       </div>
 
       {/* Appearance & Dark Mode */}
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs flex items-center justify-between">
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 flex items-center justify-center shrink-0">
             {isDark ? <Moon className="w-5 h-5 text-amber-400" /> : <Sun className="w-5 h-5 text-amber-600" />}
           </div>
           <div>
@@ -190,16 +190,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
 
         <button
           onClick={onToggleDark}
-          className="px-4 py-2 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl text-xs font-semibold text-neutral-800 dark:text-white transition"
+          className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl text-xs font-semibold text-neutral-800 dark:text-white transition flex items-center justify-center"
         >
           {isDark ? 'Switch to Light' : 'Switch to Dark'}
         </button>
       </div>
 
       {/* Database & Sample Data */}
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5" />
           </div>
           <div>
@@ -225,7 +225,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
           <button
             onClick={handleResetData}
             disabled={isResetting}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-neutral-800 hover:bg-neutral-900 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-white rounded-xl text-xs font-semibold shrink-0 transition"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2.5 min-h-[44px] bg-neutral-800 hover:bg-neutral-900 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-white rounded-xl text-xs font-semibold shrink-0 transition"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
             <span>{isResetting ? 'Loading...' : 'Seed Starter Data'}</span>
@@ -241,7 +241,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
       </div>
 
       {/* Sign Out */}
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs flex items-center justify-between">
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 sm:p-6 border border-neutral-200 dark:border-neutral-700 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
             Sign Out
@@ -253,7 +253,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ isDark, onToggleDark
 
         <button
           onClick={signOut}
-          className="flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-xl text-xs font-semibold transition"
+          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-xl text-xs font-semibold transition"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>

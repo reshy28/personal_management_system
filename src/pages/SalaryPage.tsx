@@ -362,7 +362,7 @@ export const SalaryPage: React.FC<SalaryPageProps> = ({ onNavigate }) => {
               <button
                 type="submit"
                 disabled={isAddingExpense}
-                className="w-full h-[40px] bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold shadow-2xs transition disabled:opacity-50 flex items-center justify-center"
+                className="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold shadow-2xs transition disabled:opacity-50 flex items-center justify-center"
               >
                 {isAddingExpense ? '...' : 'Add'}
               </button>
@@ -373,9 +373,9 @@ export const SalaryPage: React.FC<SalaryPageProps> = ({ onNavigate }) => {
           </p>
         </form>
 
-        {/* Deducted Expenses Table */}
+        {/* Deducted Expenses List */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-neutral-500">
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 text-xs text-neutral-500">
             <span>
               Recorded Expenses Deducted for {getMonthDisplay(selectedMonth)} (
               <strong>{monthExpensesList.length}</strong> items)
@@ -386,56 +386,96 @@ export const SalaryPage: React.FC<SalaryPageProps> = ({ onNavigate }) => {
           </div>
 
           {monthExpensesList.length === 0 ? (
-            <div className="py-8 text-center text-xs text-neutral-400 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
+            <div className="py-8 text-center text-xs text-neutral-400 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl px-3">
               No expenses recorded yet for this month. Use the form above to add an expense and decrease your salary amount.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-                    <th className="py-2.5 px-3">Expense Name</th>
-                    <th className="py-2.5 px-3">Category</th>
-                    <th className="py-2.5 px-3">Due / Log Date</th>
-                    <th className="py-2.5 px-3 text-right">Amount</th>
-                    <th className="py-2.5 px-2 text-center"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {monthExpensesList.slice(0, 10).map((exp) => {
-                    const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
-                    return (
-                      <tr key={exp.id} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 transition">
-                        <td className="py-2.5 px-3 font-semibold text-neutral-900 dark:text-white">
-                          <div className="flex items-center gap-2">
-                            <span className={`p-1.5 rounded-lg ${color.bg} ${color.text}`}>
-                              <CategoryIcon category={exp.category} className="w-3 h-3" />
-                            </span>
-                            <span>{exp.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 text-neutral-500">{exp.category}</td>
-                        <td className="py-2.5 px-3 text-neutral-400 font-mono">
-                          {exp.dueDate || exp.date}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-extrabold text-rose-600 tabular-nums">
+            <>
+              {/* Mobile Cards View (< sm) */}
+              <div className="block sm:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
+                {monthExpensesList.slice(0, 10).map((exp) => {
+                  const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
+                  return (
+                    <div key={exp.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className={`p-2 rounded-xl ${color.bg} ${color.text} shrink-0`}>
+                          <CategoryIcon category={exp.category} className="w-3.5 h-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-xs text-neutral-900 dark:text-white block truncate">
+                            {exp.name}
+                          </span>
+                          <span className="text-[10px] text-neutral-400 font-mono block">
+                            Due: {exp.dueDate || exp.date}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-extrabold text-xs text-rose-600 tabular-nums">
                           -{formatINR(exp.amount)}
-                        </td>
-                        <td className="py-2.5 px-2 text-center">
-                          <button
-                            onClick={() => deleteExpense(exp.id)}
-                            title="Delete this expense deduction"
-                            className="text-neutral-400 hover:text-rose-600 transition"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </span>
+                        <button
+                          onClick={() => deleteExpense(exp.id)}
+                          aria-label={`Delete ${exp.name}`}
+                          className="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table View (>= sm) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                      <th className="py-2.5 px-3">Expense Name</th>
+                      <th className="py-2.5 px-3">Category</th>
+                      <th className="py-2.5 px-3">Due / Log Date</th>
+                      <th className="py-2.5 px-3 text-right">Amount</th>
+                      <th className="py-2.5 px-2 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {monthExpensesList.slice(0, 10).map((exp) => {
+                      const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
+                      return (
+                        <tr key={exp.id} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 transition">
+                          <td className="py-2.5 px-3 font-semibold text-neutral-900 dark:text-white">
+                            <div className="flex items-center gap-2">
+                              <span className={`p-1.5 rounded-lg ${color.bg} ${color.text}`}>
+                                <CategoryIcon category={exp.category} className="w-3 h-3" />
+                              </span>
+                              <span>{exp.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-neutral-500">{exp.category}</td>
+                          <td className="py-2.5 px-3 text-neutral-400 font-mono">
+                            {exp.dueDate || exp.date}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-extrabold text-rose-600 tabular-nums">
+                            -{formatINR(exp.amount)}
+                          </td>
+                          <td className="py-2.5 px-2 text-center">
+                            <button
+                              onClick={() => deleteExpense(exp.id)}
+                              title="Delete this expense deduction"
+                              className="text-neutral-400 hover:text-rose-600 transition min-w-[28px] min-h-[28px] flex items-center justify-center mx-auto"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

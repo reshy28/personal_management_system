@@ -193,7 +193,7 @@ const MainLayout: React.FC = () => {
                 Base Monthly Salary (₹) *
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-neutral-400 font-bold text-sm">
+                <span className="absolute left-3.5 top-3 text-neutral-400 font-bold text-sm">
                   ₹
                 </span>
                 <input
@@ -202,7 +202,7 @@ const MainLayout: React.FC = () => {
                   required
                   value={quickSalaryVal}
                   onChange={(e) => setQuickSalaryVal(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900"
+                  className="w-full pl-8 pr-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900"
                 />
               </div>
             </div>
@@ -216,21 +216,21 @@ const MainLayout: React.FC = () => {
                 step="any"
                 value={quickBonusVal}
                 onChange={(e) => setQuickBonusVal(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-900"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-900"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-700">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-700">
               <button
                 type="button"
                 onClick={() => setIsQuickSalaryOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-xl"
+                className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl flex items-center justify-center"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
+                className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs flex items-center justify-center active:scale-95"
               >
                 Save Salary
               </button>

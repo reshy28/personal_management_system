@@ -333,7 +333,7 @@ export const FixedExpensesPage: React.FC<FixedExpensesPageProps> = ({ onNavigate
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className="w-full h-[42px] bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow transition flex items-center justify-center gap-1.5"
+                className="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow transition flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Add</span>
@@ -480,7 +480,8 @@ export const FixedExpensesPage: React.FC<FixedExpensesPageProps> = ({ onNavigate
                             type="button"
                             onClick={() => handleStartEdit(item)}
                             title="Edit name and amount"
-                            className="p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition"
+                            aria-label={`Edit ${item.name}`}
+                            className="p-2 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-750 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition min-w-[36px] min-h-[36px] flex items-center justify-center"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -488,7 +489,8 @@ export const FixedExpensesPage: React.FC<FixedExpensesPageProps> = ({ onNavigate
                             type="button"
                             onClick={() => handleDeleteItem(item.id, item.name)}
                             title="Delete fixed expense"
-                            className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/60 text-neutral-400 hover:text-rose-600 transition"
+                            aria-label={`Delete ${item.name}`}
+                            className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/60 text-neutral-400 hover:text-rose-600 transition min-w-[36px] min-h-[36px] flex items-center justify-center"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

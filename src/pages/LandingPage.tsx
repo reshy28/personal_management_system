@@ -156,7 +156,7 @@ export const LandingPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition min-w-[44px] min-h-[44px]"
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -168,7 +168,7 @@ export const LandingPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-2 py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
+              className="w-full mt-2 min-h-[48px] py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition disabled:opacity-60 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -189,7 +189,7 @@ export const LandingPage: React.FC = () => {
             <button
               type="button"
               onClick={handleQuickFill}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 py-1.5 px-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 py-2.5 px-4 min-h-[44px] rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Fill My Credentials (Rasheed)</span>

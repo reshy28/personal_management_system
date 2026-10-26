@@ -138,15 +138,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-[82vw] max-w-[280px] lg:w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200/80 dark:border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overscroll-contain pb-safe pt-safe">
           {/* Logo Header */}
-          <div className="h-18 flex items-center justify-between px-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+          <div className="h-18 flex items-center justify-between px-5 sm:px-6 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-emerald-600/25">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-emerald-600/25 shrink-0">
                 <svg
                   className="w-5 h-5 fill-current"
                   viewBox="0 0 24 24"
@@ -154,11 +154,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-1c-1.66 0-3-1.34-3-3h2c0 .55.45 1 1 1h1c.55 0 1-.45 1-1s-.45-1-1-1h-1c-1.66 0-3-1.34-3-3s1.34-3 3-3V6h2v1c1.66 0 3 1.34 3 3h-2c0-.55-.45-1-1-1h-1c-.55 0-1 .45-1 1s.45 1 1 1h1c1.66 0 3 1.34 3 3s-1.34 3-3 3v1z" />
                 </svg>
               </div>
-              <div>
-                <span className="font-extrabold text-neutral-900 dark:text-white tracking-tight text-lg block leading-none">
+              <div className="min-w-0">
+                <span className="font-extrabold text-neutral-900 dark:text-white tracking-tight text-lg block leading-none truncate">
                   RupeeTrack
                 </span>
-                <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block mt-0.5">
                   Personal Finance
                 </span>
               </div>
@@ -166,7 +166,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <button
               onClick={onCloseMobile}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-800 dark:hover:text-white lg:hidden"
+              aria-label="Close menu"
+              className="p-2 rounded-xl text-neutral-400 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
             >
               <X className="w-5 h-5" />
             </button>

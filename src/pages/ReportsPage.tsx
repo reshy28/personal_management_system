@@ -159,7 +159,7 @@ export const ReportsPage: React.FC = () => {
 
         <button
           onClick={handleExportCSV}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition"
         >
           <Download className="w-4 h-4" />
           <span>Export to CSV / Excel</span>
@@ -370,56 +370,96 @@ export const ReportsPage: React.FC = () => {
             No expenses recorded for this month to categorize.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
-                  <th className="py-3 px-4">Rank</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Share of Total Spending</th>
-                  <th className="py-3 px-4 text-right">Amount (₹)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                {categoryTotals.map((item, idx) => {
-                  const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
-                  return (
-                    <tr key={item.category} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
-                      <td className="py-3 px-4 font-bold text-neutral-400">
-                        #{idx + 1}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg ${color.bg} ${color.text}`}>
-                            <CategoryIcon category={item.category} className="w-4 h-4" />
-                          </div>
-                          <span className="font-semibold text-neutral-900 dark:text-white">
-                            {item.category}
-                          </span>
+          <>
+            {/* Mobile Breakdown Cards (< sm) */}
+            <div className="block sm:hidden divide-y divide-neutral-100 dark:divide-neutral-700/60 p-2">
+              {categoryTotals.map((item, idx) => {
+                const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
+                return (
+                  <div key={item.category} className="py-3 px-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-neutral-400 shrink-0">#{idx + 1}</span>
+                        <div className={`p-1.5 rounded-lg ${color.bg} ${color.text} shrink-0`}>
+                          <CategoryIcon category={item.category} className="w-3.5 h-3.5" />
                         </div>
-                      </td>
-                      <td className="py-3 px-4 w-1/3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-600 rounded-full"
-                              style={{ width: `${item.percentage}%` }}
-                            />
-                          </div>
-                          <span className="font-semibold text-neutral-700 dark:text-neutral-300 w-10 text-right">
-                            {item.percentage}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-black text-neutral-900 dark:text-white text-sm">
+                        <span className="font-bold text-xs text-neutral-900 dark:text-white truncate">
+                          {item.category}
+                        </span>
+                      </div>
+                      <span className="font-extrabold text-xs text-neutral-900 dark:text-white tabular-nums shrink-0">
                         {formatINR(item.amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-600 rounded-full"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold text-neutral-500 w-8 text-right shrink-0">
+                        {item.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (>= sm) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
+                    <th className="py-3 px-4">Rank</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4">Share of Total Spending</th>
+                    <th className="py-3 px-4 text-right">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
+                  {categoryTotals.map((item, idx) => {
+                    const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
+                    return (
+                      <tr key={item.category} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
+                        <td className="py-3 px-4 font-bold text-neutral-400">
+                          #{idx + 1}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-lg ${color.bg} ${color.text}`}>
+                              <CategoryIcon category={item.category} className="w-4 h-4" />
+                            </div>
+                            <span className="font-semibold text-neutral-900 dark:text-white">
+                              {item.category}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 w-1/3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-600 rounded-full"
+                                style={{ width: `${item.percentage}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold text-neutral-700 dark:text-neutral-300 w-10 text-right">
+                              {item.percentage}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right font-black text-neutral-900 dark:text-white text-sm">
+                          {formatINR(item.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

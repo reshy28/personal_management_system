@@ -409,62 +409,115 @@ export const SavingsPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Investment Name</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Notes</th>
-                  <th className="py-3 px-4 text-right">Amount (₹)</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                {monthSavingsList.map((item) => (
-                  <tr key={item.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
-                    <td className="py-3 px-4 font-mono text-neutral-600 dark:text-neutral-400">
-                      {item.date}
-                    </td>
-                    <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white">
-                      {item.name}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-medium">
-                        <SavingsTypeIcon type={item.type} className="w-3.5 h-3.5" />
-                        <span>{item.type}</span>
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-neutral-500 truncate max-w-xs">
-                      {item.notes || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-right font-black text-teal-600 dark:text-teal-400 text-sm">
-                      +{formatINR(item.amount)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => openEditModal(item)}
-                          className="p-1.5 text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(item.id)}
-                          className="p-1.5 text-neutral-400 hover:text-rose-600"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+          <>
+            {/* Mobile Cards View */}
+            <div className="block sm:hidden divide-y divide-neutral-100 dark:divide-neutral-700">
+              {monthSavingsList.map((item) => (
+                <div key={item.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-neutral-900 dark:text-white text-sm">
+                        {item.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-medium text-[11px]">
+                          <SavingsTypeIcon type={item.type} className="w-3 h-3" />
+                          <span>{item.type}</span>
+                        </span>
+                        <span className="text-[11px] font-mono text-neutral-500">
+                          {item.date}
+                        </span>
                       </div>
-                    </td>
+                    </div>
+                    <span className="font-black text-teal-600 dark:text-teal-400 text-sm whitespace-nowrap">
+                      +{formatINR(item.amount)}
+                    </span>
+                  </div>
+
+                  {item.notes && (
+                    <p className="text-xs text-neutral-500 line-clamp-2">
+                      {item.notes}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-neutral-100/60 dark:border-neutral-800">
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-semibold text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 active:scale-95"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(item.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 active:scale-95"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-neutral-50 dark:bg-neutral-900/40 text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-700">
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Investment Name</th>
+                    <th className="py-3 px-4">Type</th>
+                    <th className="py-3 px-4">Notes</th>
+                    <th className="py-3 px-4 text-right">Amount (₹)</th>
+                    <th className="py-3 px-4 text-center">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
+                  {monthSavingsList.map((item) => (
+                    <tr key={item.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-750">
+                      <td className="py-3 px-4 font-mono text-neutral-600 dark:text-neutral-400">
+                        {item.date}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-neutral-900 dark:text-white">
+                        {item.name}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-medium">
+                          <SavingsTypeIcon type={item.type} className="w-3.5 h-3.5" />
+                          <span>{item.type}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-neutral-500 truncate max-w-xs">
+                        {item.notes || '-'}
+                      </td>
+                      <td className="py-3 px-4 text-right font-black text-teal-600 dark:text-teal-400 text-sm">
+                        +{formatINR(item.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openEditModal(item)}
+                            className="p-2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(item.id)}
+                            className="p-2 text-neutral-400 hover:text-rose-600 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

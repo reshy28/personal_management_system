@@ -122,7 +122,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             placeholder="e.g. Petrol Refill, Swiggy Dinner, Groceries"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+            className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
           />
         </div>
 
@@ -133,7 +133,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               Amount (₹) *
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-2.5 text-neutral-400 font-semibold text-sm">
+              <span className="absolute left-3.5 top-3 text-neutral-400 font-semibold text-sm">
                 ₹
               </span>
               <input
@@ -144,7 +144,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 placeholder="450"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                className="w-full pl-8 pr-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               />
             </div>
           </div>
@@ -158,7 +158,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+              className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
             />
           </div>
         </div>
@@ -172,7 +172,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 appearance-none pr-10 cursor-pointer"
+              className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 appearance-none pr-10 cursor-pointer"
             >
               {EXPENSE_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
@@ -201,7 +201,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   type="button"
                   key={method}
                   onClick={() => setPaymentMethod(method)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
+                  className={`px-3.5 py-2 min-h-[38px] rounded-xl text-xs font-medium transition active:scale-95 ${
                     isSelected
                       ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-2 border-emerald-600 font-semibold'
                       : 'border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700'
@@ -221,7 +221,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-800 dark:text-amber-200">
                 <span className="font-semibold">Prevent Double Counting: </span>
-                If you already recorded the individual card transactions (food, shopping, etc.), check the box below so this bill settlement does not double-count in total expenses.
+                If you already recorded the individual card purchases (food, shopping, etc.), check the box below so this bill settlement does not double-count in total expenses.
               </div>
             </div>
             <label className="flex items-center gap-2 cursor-pointer pt-1">
@@ -248,23 +248,23 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             placeholder="e.g. Split with room partner, bill no. 482"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+            className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition flex items-center justify-center"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 rounded-xl shadow-xs transition disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center"
           >
             {isSubmitting ? 'Saving...' : initialData ? 'Update Expense' : 'Save Expense'}
           </button>
