@@ -2,17 +2,14 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Receipt,
-  Wallet,
   CreditCard,
   Pin,
-  PiggyBank,
   FileBarChart,
   PieChart,
   Settings,
   LogOut,
   Search,
   X,
-  Sparkles,
   Calculator,
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
@@ -20,13 +17,11 @@ import { useFinance } from '../context/FinanceContext';
 export type NavTab =
   | 'dashboard'
   | 'expenses'
-  | 'salary'
   | 'loans'
   | 'salary-calculator'
   | 'fixed-expenses'
-  | 'savings'
-  | 'reports'
   | 'budgets'
+  | 'reports'
   | 'settings';
 
 interface SidebarProps {
@@ -65,12 +60,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: recentExpensesCount > 0 ? `${recentExpensesCount}` : null,
     },
     {
-      id: 'salary' as NavTab,
-      label: 'Salary & Income',
-      icon: Wallet,
-      badge: null,
-    },
-    {
       id: 'loans' as NavTab,
       label: 'EMI & Loans',
       icon: CreditCard,
@@ -90,12 +79,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Fixed Expenses',
       icon: Pin,
       badge: activeFixedCount > 0 ? `${activeFixedCount}` : null,
-    },
-    {
-      id: 'savings' as NavTab,
-      label: 'Savings & Investments',
-      icon: PiggyBank,
-      badge: null,
     },
     {
       id: 'budgets' as NavTab,

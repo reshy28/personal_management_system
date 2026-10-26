@@ -235,10 +235,10 @@ export const FixedExpensesPage: React.FC<FixedExpensesPageProps> = ({ onNavigate
               <span>Salary baseline</span>
               {onNavigate && (
                 <button
-                  onClick={() => onNavigate('salary')}
+                  onClick={() => onNavigate('settings')}
                   className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
                 >
-                  Manage Salary &rarr;
+                  Edit in Settings &rarr;
                 </button>
               )}
             </div>

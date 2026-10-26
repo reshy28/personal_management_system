@@ -22,13 +22,11 @@ interface HeaderProps {
 const TAB_NAMES: Record<NavTab, string> = {
   dashboard: 'Dashboard',
   expenses: 'Daily Expenses',
-  salary: 'Salary & Income',
   loans: 'EMI & Loans',
   'salary-calculator': 'Salary Calculator',
   'fixed-expenses': 'Fixed Expenses',
-  savings: 'Savings & Investments',
-  reports: 'Monthly Reports',
   budgets: 'Budget Limits',
+  reports: 'Monthly Reports',
   settings: 'Settings',
 };
 

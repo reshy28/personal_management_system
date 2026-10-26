@@ -35,17 +35,10 @@ interface SalaryCalculatorPageProps {
 }
 
 export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNavigate }) => {
-  const { user, monthlyIncome, saveUpcomingBill, saveExpense, selectedMonth } = useFinance();
+  const { user, userProfile, monthlyIncome, saveUpcomingBill, saveExpense, selectedMonth } = useFinance();
 
-  // State: Monthly Salary amount (defaults to 20,000 or current profile income)
-  const [monthlySalary, setMonthlySalary] = useState<number>(() => {
-    const savedSalary = localStorage.getItem(`rupeetrack_calc_salary_${user?.uid || 'guest'}`);
-    if (savedSalary) {
-      const parsed = parseFloat(savedSalary);
-      if (!isNaN(parsed) && parsed > 0) return parsed;
-    }
-    return 20000; // Default to 20k to match user prompt directly
-  });
+  // Monthly Salary directly derived from Settings (strictly non-editable here, reflects everywhere without asking again)
+  const monthlySalary = userProfile?.defaultMonthlySalary ?? (monthlyIncome > 0 ? monthlyIncome : 48900);
 
   // State: Deductions / items list
   const [items, setItems] = useState<SalaryCalculatorItem[]>(() => {
@@ -84,10 +77,6 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
   const [formCategory, setFormCategory] = useState('Rent');
   const [formNotes, setFormNotes] = useState('');
 
-  // Salary Editor Modal / Prompt
-  const [isEditSalaryModalOpen, setIsEditSalaryModalOpen] = useState(false);
-  const [tempSalaryInput, setTempSalaryInput] = useState('');
-
   // Delete confirmation
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -102,16 +91,13 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
   // Sync to Firestore and LocalStorage
   useEffect(() => {
     const storageKeyItems = `rupeetrack_calc_items_${user?.uid || 'guest'}`;
-    const storageKeySalary = `rupeetrack_calc_salary_${user?.uid || 'guest'}`;
     localStorage.setItem(storageKeyItems, JSON.stringify(items));
-    localStorage.setItem(storageKeySalary, monthlySalary.toString());
 
     if (user?.uid) {
       const calcDocRef = doc(db, 'users', user.uid, 'salaryCalculator', 'default');
       setDoc(
         calcDocRef,
         {
-          monthlySalary,
           items,
           updatedAt: new Date().toISOString(),
         },
@@ -120,7 +106,7 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
         // LocalStorage is already safe fallback
       });
     }
-  }, [items, monthlySalary, user?.uid]);
+  }, [items, user?.uid]);
 
   // Load from Firestore on mount if available
   useEffect(() => {
@@ -130,9 +116,6 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
       .then((snap) => {
         if (snap.exists()) {
           const data = snap.data();
-          if (data.monthlySalary && typeof data.monthlySalary === 'number') {
-            setMonthlySalary(data.monthlySalary);
-          }
           if (Array.isArray(data.items) && data.items.length > 0) {
             setItems(data.items);
           }
@@ -240,9 +223,8 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
     }
   };
 
-  // Load Example Scenario (₹20,000 Salary, ₹5,000 Rent => ₹15,000 Remaining)
+  // Load Example Scenario (₹5,000 Rent deduction)
   const handleLoadUserExample = () => {
-    setMonthlySalary(20000);
     setItems([
       {
         id: `calc_rent_${Date.now()}`,
@@ -254,23 +236,7 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
         createdAt: new Date().toISOString(),
       },
     ]);
-    showToast('Loaded example: Salary ₹20,000 with Rent ₹5,000. Remaining Balance = ₹15,000!');
-  };
-
-  // Open Salary Edit Modal
-  const handleOpenSalaryEdit = () => {
-    setTempSalaryInput(monthlySalary.toString());
-    setIsEditSalaryModalOpen(true);
-  };
-
-  const handleSaveSalary = (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseFloat(tempSalaryInput);
-    if (!isNaN(val) && val >= 0) {
-      setMonthlySalary(val);
-      showToast(`Monthly Salary set to ${formatINR(val)}`);
-    }
-    setIsEditSalaryModalOpen(false);
+    showToast('Loaded Rent ₹5,000 deduction example. Remaining balance calculated!');
   };
 
   // Option to push deduction directly to Upcoming Bills / Reminders
@@ -300,36 +266,45 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
         </div>
       )}
 
-      {/* Top 3 Core Metrics Requested by User: Monthly Salary, Total Deductions, Remaining Balance */}
+      {/* Top 3 Core Metrics: Monthly Salary (From Settings), Total Deductions, Remaining Balance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* 1. Monthly Salary Card */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-2xs relative overflow-hidden group">
+        {/* 1. Monthly Salary Card (Strictly Non-Editable, Configured in Settings) */}
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-2xs relative overflow-hidden">
           <div className="flex items-start justify-between">
             <div>
-              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block mb-1">
-                Monthly Salary
-              </span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider block">
+                  Monthly Salary
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                  Set in Settings
+                </span>
+              </div>
               <div className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
                 {formatINR(monthlySalary)}
               </div>
             </div>
-            <button
-              onClick={handleOpenSalaryEdit}
-              className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-neutral-600 dark:text-neutral-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
-              title="Edit Monthly Salary"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-xl border border-emerald-100 dark:border-emerald-900/50">
+              ₹
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between text-xs pt-3 border-t border-neutral-100 dark:border-neutral-800">
-            <span className="text-neutral-500 dark:text-neutral-400">Salary Baseline</span>
-            <button
-              onClick={handleOpenSalaryEdit}
-              className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
-            >
-              Change Salary
-            </button>
+            <span className="text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              Configured in Settings
+            </span>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('settings')}
+                className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1"
+                title="Edit your baseline monthly salary in Settings"
+              >
+                <span>Edit in Settings</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -797,91 +772,6 @@ export const SalaryCalculatorPage: React.FC<SalaryCalculatorPageProps> = ({ onNa
                 className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
               >
                 {editingItemId ? 'Update Deduction' : 'Add Deduction'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Salary Quick Edit Modal */}
-      {isEditSalaryModalOpen && (
-        <Modal
-          isOpen={isEditSalaryModalOpen}
-          onClose={() => setIsEditSalaryModalOpen(false)}
-          title="Set Monthly Salary"
-          subtitle="Adjust baseline salary for the calculator"
-        >
-          <form onSubmit={handleSaveSalary} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                Monthly Salary Amount (₹) *
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-neutral-400 font-bold text-sm">
-                  ₹
-                </span>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  required
-                  value={tempSalaryInput}
-                  onChange={(e) => setTempSalaryInput(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-
-            {/* Quick Preset Buttons */}
-            <div>
-              <span className="text-[11px] font-semibold text-neutral-500 block mb-1.5">
-                Quick Presets:
-              </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setTempSalaryInput('20000')}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                >
-                  ₹20,000 (Example)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTempSalaryInput('30000')}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-                >
-                  ₹30,000
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTempSalaryInput('48900')}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-                >
-                  ₹48,900 (Default)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTempSalaryInput('60000')}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-                >
-                  ₹60,000
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <button
-                type="button"
-                onClick={() => setIsEditSalaryModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
-              >
-                Save Baseline
               </button>
             </div>
           </form>

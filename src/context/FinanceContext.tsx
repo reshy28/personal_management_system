@@ -7,6 +7,7 @@ import {
   loginWithFixedCredentials,
   logoutUser,
   isAuthorizedUserSession,
+  getAuthorizedUserId,
   FIXED_USER_EMAIL,
   FIXED_USER_ID,
   AppAuthUser,
@@ -37,6 +38,7 @@ import {
 interface FinanceContextType {
   user: AppAuthUser | User | null;
   authLoading: boolean;
+  dataLoading: boolean;
   selectedMonth: string; // YYYY-MM
   setSelectedMonth: (month: string) => void;
 
@@ -63,6 +65,7 @@ interface FinanceContextType {
   savingsRate: number;
   todayExpenses: number;
   highestSpendingCategory: { category: string; amount: number } | null;
+  monthlyBudget: number;
 
   // Fixed expenses configuration for Salary Management
   fixedExpenses: FixedExpenseItem[];
@@ -76,9 +79,12 @@ interface FinanceContextType {
   signOut: () => Promise<void>;
 
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateDefaultSalary: (amount: number) => Promise<void>;
+  updateMonthlyBudget: (amount: number) => Promise<void>;
   updateFixedExpenses: (items: FixedExpenseItem[]) => Promise<void>;
   toggleIncludeFixedExpenses: (include: boolean) => Promise<void>;
   saveSalaryRecord: (record: Omit<SalaryRecord, 'id' | 'userId'>, id?: string) => Promise<void>;
+  deleteSalaryRecord: (id: string) => Promise<void>;
   saveExpense: (expense: Omit<Expense, 'id' | 'userId'>, id?: string) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   saveLoan: (loan: Omit<Loan, 'id' | 'userId'>, id?: string) => Promise<void>;
@@ -111,6 +117,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return null;
   });
   const [authLoading, setAuthLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(getMonthYearKey(new Date()));
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -125,9 +132,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Listen to Auth State
   useEffect(() => {
     if (isAuthorizedUserSession()) {
+      const storedUid = getAuthorizedUserId();
       setUser((prev) =>
         prev || {
-          uid: FIXED_USER_ID,
+          uid: storedUid,
           email: FIXED_USER_EMAIL,
           displayName: 'Rasheed',
           emailVerified: true,
@@ -139,6 +147,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } else {
       setUser(null);
       setAuthLoading(false);
+      setDataLoading(false);
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -147,12 +156,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           // If unverified session, clear
           await logoutUser();
           setUser(null);
+          setDataLoading(false);
         } else {
-          setUser(currentUser);
+          const storedUid = getAuthorizedUserId();
+          setUser({
+            uid: storedUid || currentUser.uid,
+            email: currentUser.email || FIXED_USER_EMAIL,
+            displayName: currentUser.displayName || 'Rasheed',
+            emailVerified: true,
+            isAnonymous: currentUser.isAnonymous,
+          });
         }
       } else {
         if (!isAuthorizedUserSession()) {
           setUser(null);
+          setDataLoading(false);
         }
       }
       setAuthLoading(false);
@@ -171,8 +189,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setSavings([]);
       setBudgets([]);
       setUpcomingBills([]);
+      setDataLoading(false);
       return;
     }
+
+    setDataLoading(true);
+    let loadedCount = 0;
+    const markLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= 3) {
+        setDataLoading(false);
+      }
+    };
+
+    const safetyTimer = setTimeout(() => {
+      setDataLoading(false);
+    }, 2000);
 
     const uid = user.uid;
 
@@ -181,6 +213,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubProfile = onSnapshot(
       userDocRef,
       (snapshot) => {
+        markLoaded();
         if (snapshot.exists()) {
           setUserProfile(snapshot.data() as UserProfile);
         } else {
@@ -188,8 +221,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const initialProfile: UserProfile = {
             userId: uid,
             email: user.email || '',
-            displayName: user.displayName || 'User',
+            displayName: user.displayName || 'Rasheed',
             defaultMonthlySalary: 48900,
+            monthlyBudget: 30000,
             currency: 'INR',
             includeFixedExpensesInSalary: true,
             fixedExpenses: DEFAULT_FIXED_EXPENSES,
@@ -199,7 +233,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           );
         }
       },
-      (error) => handleFirestoreError(error, OperationType.GET, `users/${uid}`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.GET, `users/${uid}`);
+      }
     );
 
     // Salaries listener
@@ -207,11 +244,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubSalaries = onSnapshot(
       salariesCol,
       (snapshot) => {
+        markLoaded();
         const list: SalaryRecord[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as SalaryRecord));
         setSalaries(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/salaries`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/salaries`);
+      }
     );
 
     // Expenses listener
@@ -219,11 +260,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubExpenses = onSnapshot(
       expensesCol,
       (snapshot) => {
+        markLoaded();
         const list: Expense[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as Expense));
         setExpenses(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/expenses`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/expenses`);
+      }
     );
 
     // Loans listener
@@ -231,11 +276,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubLoans = onSnapshot(
       loansCol,
       (snapshot) => {
+        markLoaded();
         const list: Loan[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as Loan));
         setLoans(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/loans`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/loans`);
+      }
     );
 
     // EMI Payments listener
@@ -243,11 +292,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubEmi = onSnapshot(
       emiCol,
       (snapshot) => {
+        markLoaded();
         const list: EmiPayment[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as EmiPayment));
         setEmiPayments(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/emiPayments`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/emiPayments`);
+      }
     );
 
     // Savings listener
@@ -255,11 +308,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubSavings = onSnapshot(
       savingsCol,
       (snapshot) => {
+        markLoaded();
         const list: SavingRecord[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as SavingRecord));
         setSavings(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/savings`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/savings`);
+      }
     );
 
     // Budgets listener
@@ -267,11 +324,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubBudgets = onSnapshot(
       budgetsCol,
       (snapshot) => {
+        markLoaded();
         const list: BudgetRecord[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as BudgetRecord));
         setBudgets(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/budgets`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/budgets`);
+      }
     );
 
     // Upcoming Bills listener
@@ -279,14 +340,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const unsubUpcomingBills = onSnapshot(
       upcomingBillsCol,
       (snapshot) => {
+        markLoaded();
         const list: UpcomingBill[] = [];
         snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as UpcomingBill));
         setUpcomingBills(list);
       },
-      (error) => handleFirestoreError(error, OperationType.LIST, `users/${uid}/upcomingBills`)
+      (error) => {
+        markLoaded();
+        handleFirestoreError(error, OperationType.LIST, `users/${uid}/upcomingBills`);
+      }
     );
 
     return () => {
+      clearTimeout(safetyTimer);
       unsubProfile();
       unsubSalaries();
       unsubExpenses();
@@ -431,21 +497,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
     }
 
-    // 5. Sample Investment
-    const savingId = 'saving_sip_01';
-    await setDoc(doc(db, 'users', uid, 'savings', savingId), {
-      userId: uid,
-      name: 'Nifty 50 Index Mutual Fund SIP',
-      amount: 5000,
-      date: `${currentMonth}-07`,
-      monthYear: currentMonth,
-      type: 'Mutual Fund',
-      notes: 'Monthly auto-invest on 7th',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-
-    // 6. Category Budgets
+    // 5. Category Budgets
     const sampleBudgets = [
       { category: 'Rent', budgetAmount: 12000 },
       { category: 'Food', budgetAmount: 7000 },
@@ -522,9 +574,42 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const ref = doc(db, 'users', user.uid);
       await setDoc(ref, data, { merge: true });
+
+      // If defaultMonthlySalary changed, synchronize active month salary record so all screens reflect it immediately
+      if (typeof data.defaultMonthlySalary === 'number' && data.defaultMonthlySalary > 0) {
+        const salaryId = `sal_${selectedMonth}`;
+        const existingRecord = salaries.find((s) => s.monthYear === selectedMonth);
+        const bonus = existingRecord?.bonusIncome || 0;
+        const freelance = existingRecord?.freelanceIncome || 0;
+        const other = existingRecord?.otherIncome || 0;
+        const totalIncome = data.defaultMonthlySalary + bonus + freelance + other;
+
+        await setDoc(
+          doc(db, 'users', user.uid, 'salaries', salaryId),
+          {
+            userId: user.uid,
+            monthYear: selectedMonth,
+            baseSalary: data.defaultMonthlySalary,
+            receivedDate: existingRecord?.receivedDate || `${selectedMonth}-01`,
+            bonusIncome: bonus,
+            freelanceIncome: freelance,
+            otherIncome: other,
+            totalIncome,
+            notes: existingRecord?.notes || 'Monthly salary synchronized from Settings',
+            updatedAt: new Date().toISOString(),
+            createdAt: existingRecord?.createdAt || new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      }
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
     }
+  };
+
+  // Explicit helper to update monthly salary from Settings and reflect across all screens
+  const updateDefaultSalary = async (amount: number) => {
+    await updateProfile({ defaultMonthlySalary: amount });
   };
 
   const updateFixedExpenses = async (items: FixedExpenseItem[]) => {
@@ -569,6 +654,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       await setDoc(doc(db, 'users', user.uid, 'salaries', salaryId), payload);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/salaries`);
+    }
+  };
+
+  const deleteSalaryRecord = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'salaries', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `users/${user.uid}/salaries/${id}`);
     }
   };
 
@@ -902,10 +996,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [fixedExpenses, includeFixedExpensesInSalary]);
 
   // Remaining Balance:
-  // Remaining Balance = Total Income - Daily Expenses - Total Monthly EMI Paid - Total Savings / Investments
+  // Remaining Balance = Total Income - Daily Expenses - Total Monthly EMI Paid
   const remainingBalance = useMemo(() => {
-    return monthlyIncome - monthlyExpenses - monthlyEmiPaid - monthlySavings;
-  }, [monthlyIncome, monthlyExpenses, monthlyEmiPaid, monthlySavings]);
+    return monthlyIncome - monthlyExpenses - monthlyEmiPaid;
+  }, [monthlyIncome, monthlyExpenses, monthlyEmiPaid]);
 
   // Total Outstanding Loans principal
   const totalOutstandingLoans = useMemo(() => {
@@ -948,11 +1042,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return maxCat ? { category: maxCat, amount: maxAmount } : null;
   }, [monthlyExpensesList]);
 
+  // Target overall monthly expense budget limit
+  const monthlyBudget = useMemo(() => {
+    return userProfile?.monthlyBudget ?? 30000;
+  }, [userProfile]);
+
+  const updateMonthlyBudget = async (amount: number) => {
+    if (!user) return;
+    await updateProfile({ monthlyBudget: amount });
+  };
+
   return (
     <FinanceContext.Provider
       value={{
         user,
         authLoading,
+        dataLoading,
         selectedMonth,
         setSelectedMonth,
         userProfile,
@@ -976,6 +1081,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         savingsRate,
         todayExpenses,
         highestSpendingCategory,
+        monthlyBudget,
         fixedExpenses,
         includeFixedExpensesInSalary,
         fixedExpensesTotal,
@@ -984,9 +1090,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         signInGuest,
         signOut: handleSignOut,
         updateProfile,
+        updateDefaultSalary,
+        updateMonthlyBudget,
         updateFixedExpenses,
         toggleIncludeFixedExpenses,
         saveSalaryRecord,
+        deleteSalaryRecord,
         saveExpense,
         deleteExpense,
         saveLoan,

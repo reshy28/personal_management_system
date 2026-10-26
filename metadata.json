@@ -1,6 +1,6 @@
 {
   "name": "RupeeTrack - Personal Finance & EMI Manager",
-  "description": "Clean, modern personal finance web application for managing salary (₹48,900), daily expenses, active loans, EMIs, monthly budgets, and investments in Indian Rupees.",
+  "description": "Clean, modern personal finance web application for managing monthly salary, daily expenses, active loans, EMIs, and monthly budgets in Indian Rupees.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

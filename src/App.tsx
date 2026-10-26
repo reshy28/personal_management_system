@@ -4,29 +4,23 @@ import { Sidebar, NavTab } from './components/Sidebar';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { ExpenseModal } from './components/ExpenseModal';
-import { Modal } from './components/Modal';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExpensesPage } from './pages/ExpensesPage';
-import { SalaryPage } from './pages/SalaryPage';
 import { LoansPage } from './pages/LoansPage';
-import { SavingsPage } from './pages/SavingsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { BudgetsPage } from './pages/BudgetsPage';
 import { FixedExpensesPage } from './pages/FixedExpensesPage';
 import { SalaryCalculatorPage } from './pages/SalaryCalculatorPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { Loader2 } from 'lucide-react';
-import { formatINR } from './types';
 
 const MainLayout: React.FC = () => {
   const {
     user,
     authLoading,
+    dataLoading,
     saveExpense,
-    saveSalaryRecord,
-    currentSalaryRecord,
-    selectedMonth,
     expenses,
     salaries,
     loans,
@@ -36,11 +30,6 @@ const MainLayout: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
-  const [isQuickSalaryOpen, setIsQuickSalaryOpen] = useState(false);
-
-  // Quick salary form state
-  const [quickSalaryVal, setQuickSalaryVal] = useState('48900');
-  const [quickBonusVal, setQuickBonusVal] = useState('0');
 
   // Dark mode
   const [isDark, setIsDark] = useState(() => {
@@ -57,19 +46,19 @@ const MainLayout: React.FC = () => {
     }
   }, [isDark]);
 
-  // If user is logged in and has completely empty data (fresh account), auto-seed the default dataset with ₹48,900
+  // If user is logged in and has completely empty data (fresh account after Firestore load completes), auto-seed the default dataset with ₹48,900
   useEffect(() => {
-    if (user && !authLoading && expenses.length === 0 && salaries.length === 0 && loans.length === 0) {
+    if (user && !authLoading && !dataLoading && expenses.length === 0 && salaries.length === 0 && loans.length === 0) {
       resetToDefaultDemoData();
     }
-  }, [user, authLoading, expenses.length, salaries.length, loans.length]);
+  }, [user, authLoading, dataLoading, expenses.length, salaries.length, loans.length]);
 
-  if (authLoading) {
+  if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 text-emerald-600 animate-spin mb-3" />
         <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-          Loading RupeeTrack...
+          {authLoading ? 'Loading RupeeTrack...' : 'Syncing with Firebase Firestore...'}
         </p>
       </div>
     );
@@ -78,39 +67,6 @@ const MainLayout: React.FC = () => {
   if (!user) {
     return <LandingPage />;
   }
-
-  const handleQuickSalarySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const base = parseFloat(quickSalaryVal) || 48900;
-    const bonus = parseFloat(quickBonusVal) || 0;
-    const freelance = currentSalaryRecord?.freelanceIncome || 0;
-    const other = currentSalaryRecord?.otherIncome || 0;
-
-    await saveSalaryRecord(
-      {
-        monthYear: selectedMonth,
-        baseSalary: base,
-        receivedDate: currentSalaryRecord?.receivedDate || `${selectedMonth}-01`,
-        bonusIncome: bonus,
-        freelanceIncome: freelance,
-        otherIncome: other,
-        totalIncome: base + bonus + freelance + other,
-        notes: currentSalaryRecord?.notes || 'Updated via quick salary modal',
-      },
-      currentSalaryRecord?.id?.startsWith('fallback_') ? undefined : currentSalaryRecord?.id
-    );
-    setIsQuickSalaryOpen(false);
-  };
-
-  const openQuickSalaryModal = () => {
-    setQuickSalaryVal(
-      currentSalaryRecord?.baseSalary?.toString() || '48900'
-    );
-    setQuickBonusVal(
-      currentSalaryRecord?.bonusIncome ? currentSalaryRecord.bonusIncome.toString() : '0'
-    );
-    setIsQuickSalaryOpen(true);
-  };
 
   return (
     <div className="min-h-screen bg-neutral-100/70 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col font-sans transition-colors">
@@ -138,14 +94,10 @@ const MainLayout: React.FC = () => {
             <DashboardPage
               onNavigate={setCurrentTab}
               onOpenAddExpense={() => setIsAddExpenseModalOpen(true)}
-              onOpenQuickSalary={openQuickSalaryModal}
             />
           )}
           {currentTab === 'expenses' && (
             <ExpensesPage onOpenAddExpense={() => setIsAddExpenseModalOpen(true)} />
-          )}
-          {currentTab === 'salary' && (
-            <SalaryPage onNavigate={setCurrentTab} />
           )}
           {currentTab === 'loans' && <LoansPage />}
           {currentTab === 'salary-calculator' && (
@@ -154,7 +106,6 @@ const MainLayout: React.FC = () => {
           {currentTab === 'fixed-expenses' && (
             <FixedExpensesPage onNavigate={setCurrentTab} />
           )}
-          {currentTab === 'savings' && <SavingsPage />}
           {currentTab === 'reports' && <ReportsPage />}
           {currentTab === 'budgets' && <BudgetsPage />}
           {currentTab === 'settings' && (
@@ -177,66 +128,6 @@ const MainLayout: React.FC = () => {
           onClose={() => setIsAddExpenseModalOpen(false)}
           onSave={saveExpense}
         />
-      )}
-
-      {/* Quick Salary Edit Modal */}
-      {isQuickSalaryOpen && (
-        <Modal
-          isOpen={isQuickSalaryOpen}
-          onClose={() => setIsQuickSalaryOpen(false)}
-          title="Update Monthly Salary / Income"
-          subtitle={`Adjust income for ${selectedMonth}`}
-        >
-          <form onSubmit={handleQuickSalarySubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Base Monthly Salary (₹) *
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-3 text-neutral-400 font-bold text-sm">
-                  ₹
-                </span>
-                <input
-                  type="number"
-                  step="any"
-                  required
-                  value={quickSalaryVal}
-                  onChange={(e) => setQuickSalaryVal(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-900"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Bonus / Additional Incentive (₹)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={quickBonusVal}
-                onChange={(e) => setQuickBonusVal(e.target.value)}
-                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-900"
-              />
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-700">
-              <button
-                type="button"
-                onClick={() => setIsQuickSalaryOpen(false)}
-                className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl flex items-center justify-center"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs flex items-center justify-center active:scale-95"
-              >
-                Save Salary
-              </button>
-            </div>
-          </form>
-        </Modal>
       )}
     </div>
   );

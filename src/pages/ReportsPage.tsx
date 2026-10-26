@@ -29,14 +29,11 @@ export const ReportsPage: React.FC = () => {
     monthlyIncome,
     monthlyExpenses,
     monthlyEmiPaid,
-    monthlySavings,
     remainingBalance,
-    savingsRate,
     highestSpendingCategory,
     expenses,
     salaries,
     emiPayments,
-    savings,
     userProfile,
   } = useFinance();
 
@@ -72,18 +69,13 @@ export const ReportsPage: React.FC = () => {
       .filter((p) => p.monthYear === previousMonthKey || p.paymentDate.startsWith(previousMonthKey))
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    const prevSav = savings
-      .filter((s) => s.monthYear === previousMonthKey || s.date.startsWith(previousMonthKey))
-      .reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-
     return {
       income: prevIncome,
       expenses: prevExp,
       emi: prevEmi,
-      savings: prevSav,
-      remaining: prevIncome - prevExp - prevEmi - prevSav,
+      remaining: prevIncome - prevExp - prevEmi,
     };
-  }, [previousMonthKey, salaries, expenses, emiPayments, savings, userProfile]);
+  }, [previousMonthKey, salaries, expenses, emiPayments, userProfile]);
 
   // Category Breakdown
   const categoryTotals = useMemo(() => {
@@ -109,9 +101,7 @@ export const ReportsPage: React.FC = () => {
     lines.push(`Monthly Income (₹),${monthlyIncome}`);
     lines.push(`Daily Expenses (₹),${monthlyExpenses}`);
     lines.push(`Total EMI Paid (₹),${monthlyEmiPaid}`);
-    lines.push(`Savings & Investments (₹),${monthlySavings}`);
     lines.push(`Net Remaining Balance (₹),${remainingBalance}`);
-    lines.push(`Savings Rate (%),${savingsRate}%`);
     lines.push('');
     lines.push('CATEGORY SPENDING BREAKDOWN');
     lines.push('Category,Amount (₹),Share (%)');
@@ -138,7 +128,7 @@ export const ReportsPage: React.FC = () => {
 
   const expenseDiff = monthlyExpenses - prevMonthMetrics.expenses;
   const incomeDiff = monthlyIncome - prevMonthMetrics.income;
-  const savingsDiff = monthlySavings - prevMonthMetrics.savings;
+  const emiDiff = monthlyEmiPaid - prevMonthMetrics.emi;
 
   return (
     <div className="space-y-6">
@@ -153,7 +143,7 @@ export const ReportsPage: React.FC = () => {
             Comprehensive Report for {getMonthDisplay(selectedMonth)}
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Full summary of inflows, outflows, debt payments, and savings rate.
+            Full summary of monthly inflows, daily outflows, debt installments, and net balance.
           </p>
         </div>
 
@@ -167,7 +157,7 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Main Financial Statement Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Income */}
         <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 border border-neutral-200 dark:border-neutral-700 shadow-xs">
           <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block">
@@ -176,7 +166,7 @@ export const ReportsPage: React.FC = () => {
           <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
             {formatINR(monthlyIncome)}
           </div>
-          <span className="text-[10px] text-neutral-400">Salary + Freelance</span>
+          <span className="text-[10px] text-neutral-400">Monthly baseline</span>
         </div>
 
         {/* Expenses */}
@@ -201,27 +191,16 @@ export const ReportsPage: React.FC = () => {
           <span className="text-[10px] text-neutral-400">Debt installments</span>
         </div>
 
-        {/* Savings */}
-        <div className="bg-white dark:bg-neutral-800 rounded-2xl p-4 border border-neutral-200 dark:border-neutral-700 shadow-xs">
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block">
-            4. Savings &amp; SIP
-          </span>
-          <div className="text-xl sm:text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">
-            {formatINR(monthlySavings)}
-          </div>
-          <span className="text-[10px] text-neutral-400">{savingsRate}% savings rate</span>
-        </div>
-
         {/* Remaining Net Balance */}
         <div
-          className={`col-span-2 lg:col-span-1 rounded-2xl p-4 border shadow-xs ${
+          className={`rounded-2xl p-4 border shadow-xs ${
             remainingBalance >= 0
               ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800'
               : 'bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800'
           }`}
         >
           <span className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider block">
-            5. Net Balance
+            4. Net Balance
           </span>
           <div
             className={`text-xl sm:text-2xl font-black mt-1 ${
@@ -314,33 +293,33 @@ export const ReportsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Savings Delta */}
+          {/* EMI Payments Delta */}
           <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200/60 dark:border-neutral-700/60">
             <span className="text-xs font-semibold text-neutral-500 block">
-              Investments Delta
+              EMI Debt Payments Delta
             </span>
             <div className="flex items-center gap-2 mt-1">
-              {savingsDiff > 0 ? (
-                <TrendingUp className="w-5 h-5 text-teal-600" />
-              ) : savingsDiff < 0 ? (
-                <TrendingDown className="w-5 h-5 text-amber-600" />
+              {emiDiff > 0 ? (
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+              ) : emiDiff < 0 ? (
+                <TrendingDown className="w-5 h-5 text-emerald-600" />
               ) : (
                 <Minus className="w-5 h-5 text-neutral-400" />
               )}
               <span
                 className={`text-lg font-bold ${
-                  savingsDiff > 0
-                    ? 'text-teal-600'
-                    : savingsDiff < 0
-                    ? 'text-amber-600'
+                  emiDiff > 0
+                    ? 'text-indigo-600'
+                    : emiDiff < 0
+                    ? 'text-emerald-600'
                     : 'text-neutral-600'
                 }`}
               >
-                {savingsDiff > 0 ? `+${formatINR(savingsDiff)}` : formatINR(savingsDiff)}
+                {emiDiff > 0 ? `+${formatINR(emiDiff)}` : formatINR(emiDiff)}
               </span>
             </div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
-              {savingsDiff > 0 ? 'Saved more than last month' : 'Savings contribution change'}
+              {emiDiff > 0 ? 'Higher debt outflow vs last month' : emiDiff < 0 ? 'Lower debt outflow vs last month' : 'EMI payments identical'}
             </span>
           </div>
         </div>

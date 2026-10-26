@@ -211,6 +211,7 @@ export interface UserProfile {
   email?: string;
   displayName?: string;
   defaultMonthlySalary: number;
+  monthlyBudget?: number; // Target monthly expense budget limit
   currency: string;
   includeFixedExpensesInSalary?: boolean; // Option to add or not add fixed expenses in salary management
   fixedExpenses?: FixedExpenseItem[];

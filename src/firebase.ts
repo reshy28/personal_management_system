@@ -95,6 +95,10 @@ export function isAuthorizedUserSession(): boolean {
   );
 }
 
+export function getAuthorizedUserId(): string {
+  return localStorage.getItem('rupeetrack_auth_uid') || FIXED_USER_ID;
+}
+
 export async function loginWithFixedCredentials(
   emailInput: string,
   passwordInput: string
@@ -107,15 +111,22 @@ export async function loginWithFixedCredentials(
   // Persist authorized status in local storage immediately
   localStorage.setItem('rupeetrack_auth_email', FIXED_USER_EMAIL);
   localStorage.setItem('rupeetrack_auth_session', 'active');
+  localStorage.setItem('rupeetrack_auth_uid', FIXED_USER_ID);
 
   // Attempt Firebase Auth sign-in non-blockingly so external network issues never prevent access
   try {
     const cred = await signInWithEmailAndPassword(auth, normalizedEmail, passwordInput);
+    if (cred.user?.uid) {
+      localStorage.setItem('rupeetrack_auth_uid', cred.user.uid);
+    }
     return cred.user;
   } catch (err: any) {
     if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
       try {
         const newCred = await createUserWithEmailAndPassword(auth, normalizedEmail, passwordInput);
+        if (newCred.user?.uid) {
+          localStorage.setItem('rupeetrack_auth_uid', newCred.user.uid);
+        }
         return newCred.user;
       } catch {
         // Ignore and fallback
@@ -123,6 +134,9 @@ export async function loginWithFixedCredentials(
     }
     try {
       const anonCred = await signInAnonymously(auth);
+      if (anonCred.user?.uid) {
+        localStorage.setItem('rupeetrack_auth_uid', anonCred.user.uid);
+      }
       return anonCred.user;
     } catch {
       // Ignore and fallback
@@ -130,8 +144,10 @@ export async function loginWithFixedCredentials(
   }
 
   // Fallback to deterministic master user (granted full read/write in firestore.rules)
+  const masterUid = auth.currentUser?.uid || FIXED_USER_ID;
+  localStorage.setItem('rupeetrack_auth_uid', masterUid);
   const masterUser: AppAuthUser = {
-    uid: auth.currentUser?.uid || FIXED_USER_ID,
+    uid: masterUid,
     email: FIXED_USER_EMAIL,
     displayName: 'Rasheed',
     emailVerified: true,
@@ -143,6 +159,7 @@ export async function loginWithFixedCredentials(
 export async function logoutUser(): Promise<void> {
   localStorage.removeItem('rupeetrack_auth_email');
   localStorage.removeItem('rupeetrack_auth_session');
+  localStorage.removeItem('rupeetrack_auth_uid');
   try {
     await signOut(auth);
   } catch (err) {

@@ -16,22 +16,20 @@ import {
   CreditCard,
   ArrowRight,
   Plus,
-  MoreHorizontal,
-  TrendingUp,
-  Search,
-  Check,
   RotateCcw,
   Receipt,
-  Bell,
-  AlertTriangle,
   Calendar,
   CheckCircle2,
   Clock,
-  Sparkles,
-  DollarSign,
-  ShieldAlert,
-  Calculator,
+  AlertTriangle,
+  Wallet,
+  Settings,
+  TrendingUp,
+  TrendingDown,
   Trash2,
+  Check,
+  ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { NavTab } from '../components/Sidebar';
 import { CategoryIcon, CATEGORY_COLORS } from '../components/CategoryIcon';
@@ -40,26 +38,22 @@ import { Modal } from '../components/Modal';
 interface DashboardPageProps {
   onNavigate: (tab: NavTab) => void;
   onOpenAddExpense: () => void;
-  onOpenQuickSalary: () => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigate,
   onOpenAddExpense,
-  onOpenQuickSalary,
 }) => {
   const {
+    user,
+    userProfile,
     selectedMonth,
     setSelectedMonth,
     monthlyIncome,
     monthlyExpenses,
     monthlyEmiPaid,
-    monthlyEmiCommitment,
     monthlySavings,
     remainingBalance,
-    totalOutstandingLoans,
-    totalLoanAmountAll,
-    totalLoanRepaidAll,
     loans,
     expenses,
     upcomingBills,
@@ -67,28 +61,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     saveLoan,
     saveUpcomingBill,
     markBillPaid,
-    deleteUpcomingBill,
     deleteExpense,
     resetToDefaultDemoData,
   } = useFinance();
-
-  // Search filter for recent activities
-  const [tableSearch, setTableSearch] = useState('');
 
   // Quick Pay EMI modal
   const [payingLoan, setPayingLoan] = useState<Loan | null>(null);
   const [payAmount, setPayAmount] = useState('');
   const [payDate, setPayDate] = useState(getTodayDateStr());
   const [payNotes, setPayNotes] = useState('');
-
-  // Add Bike Loan Modal states (Bike Name, Monthly EMI, EMIs Already Paid, Outstanding Principal, Start Date, Every Month EMI Day)
-  const [isAddLoanModalOpen, setIsAddLoanModalOpen] = useState(false);
-  const [newBikeName, setNewBikeName] = useState('');
-  const [newBikeEmi, setNewBikeEmi] = useState('');
-  const [newBikePaidEmis, setNewBikePaidEmis] = useState('0');
-  const [newBikeOutstanding, setNewBikeOutstanding] = useState('');
-  const [newBikeStartDate, setNewBikeStartDate] = useState(getTodayDateStr());
-  const [newBikeEmiDay, setNewBikeEmiDay] = useState('5');
 
   // Add Upcoming Bill Modal
   const [isAddBillModalOpen, setIsAddBillModalOpen] = useState(false);
@@ -97,79 +78,45 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [newBillAmount, setNewBillAmount] = useState('');
   const [newBillDueDate, setNewBillDueDate] = useState(getTodayDateStr());
 
-  // -------------------------------------------------------------
-  // Unified Upcoming Payments List (Bills + Active Loan EMIs)
-  // -------------------------------------------------------------
-  const allUpcomingItems = useMemo(() => {
-    // 1. Regular recurring bills (Rent, Credit Card, Utilities, etc.)
-    const billItems = upcomingBills.map((b) => {
-      const statusInfo = calculatePaymentStatus(b.dueDate, b.isPaid);
-      return {
-        id: b.id,
-        type: 'bill' as const,
-        name: b.name,
-        category: b.category,
-        amount: b.amount,
-        dueDate: b.dueDate,
-        isPaid: b.isPaid,
-        statusInfo,
-        originalBill: b,
-      };
-    });
+  // Personal Greeting calculation
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
 
-    // 2. Loan EMIs for active loans
-    const emiItems = loans
-      .filter((l) => l.status === 'Active' && l.nextDueDate)
-      .map((loan) => {
-        const hasPaidThisMonth = false;
-        const statusInfo = calculatePaymentStatus(loan.nextDueDate, hasPaidThisMonth);
-        return {
-          id: `loan_emi_${loan.id}`,
-          type: 'emi' as const,
-          name: `${loan.loanName} EMI`,
-          category: 'Bills and Utilities' as ExpenseCategory,
-          amount: loan.emiAmount,
-          dueDate: loan.nextDueDate,
-          isPaid: hasPaidThisMonth,
-          statusInfo,
-          originalLoan: loan,
-        };
-      });
+  const userName = useMemo(() => {
+    if (userProfile?.displayName) return userProfile.displayName.split(' ')[0];
+    if (user?.displayName) return user.displayName.split(' ')[0];
+    return 'Rasheed';
+  }, [userProfile, user]);
 
-    // Combine and sort by due date ascending
-    return [...billItems, ...emiItems].sort((a, b) => {
-      if (a.isPaid && !b.isPaid) return 1;
-      if (!a.isPaid && b.isPaid) return -1;
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    });
-  }, [upcomingBills, loans]);
+  // Previous month key (e.g. 2026-09)
+  const previousMonthKey = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    let prevYear = year;
+    let prevMonth = month - 1;
+    if (prevMonth < 1) {
+      prevMonth = 12;
+      prevYear -= 1;
+    }
+    return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+  }, [selectedMonth]);
 
-  // Urgent reminders: unpaid items with due date within 5 days (diffDays <= 5)
-  const urgentReminders = useMemo(() => {
-    return allUpcomingItems.filter(
-      (item) => !item.isPaid && item.statusInfo.diffDays <= 5
-    );
-  }, [allUpcomingItems]);
-
-  // Upcoming & Due Date Reminders: strictly show payments due in 5 days or less
-  const displayedUpcomingItems = useMemo(() => {
-    return allUpcomingItems.filter((item) => item.statusInfo.diffDays <= 5);
-  }, [allUpcomingItems]);
-
-  // Filtered recent daily expenses
-  const recentExpenses = useMemo(() => {
+  // Spending in previous month for dynamic comparison
+  const prevMonthExpenses = useMemo(() => {
     return expenses
-      .filter((e) => {
-        const matchesMonth = e.monthYear === selectedMonth || e.date.startsWith(selectedMonth);
-        const matchesSearch =
-          !tableSearch ||
-          e.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
-          e.category.toLowerCase().includes(tableSearch.toLowerCase());
-        return matchesMonth && matchesSearch;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 7);
-  }, [expenses, selectedMonth, tableSearch]);
+      .filter(
+        (e) =>
+          (e.monthYear === previousMonthKey || e.date.startsWith(previousMonthKey)) &&
+          !e.isDebtSettlement
+      )
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  }, [expenses, previousMonthKey]);
+
+  // Spending difference with previous month
+  const expenseDiff = monthlyExpenses - prevMonthExpenses;
 
   // Today's total expenses
   const todayTotalExpenses = useMemo(() => {
@@ -179,7 +126,73 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   }, [expenses]);
 
-  // Handle Pay EMI
+  // Current month non-debt transactions count
+  const currentMonthTransactionsCount = useMemo(() => {
+    return expenses.filter(
+      (e) =>
+        (e.monthYear === selectedMonth || e.date.startsWith(selectedMonth)) &&
+        !e.isDebtSettlement
+    ).length;
+  }, [expenses, selectedMonth]);
+
+  // -------------------------------------------------------------
+  // Upcoming Due Dates (Strictly 5-day reminder window + overdue)
+  // Unified from bills and active loan EMIs
+  // -------------------------------------------------------------
+  const upcomingDueItems = useMemo(() => {
+    // 1. Regular recurring bills (Rent, Credit Card, Utilities, etc.)
+    const billItems = upcomingBills
+      .filter((b) => !b.isPaid)
+      .map((b) => {
+        const statusInfo = calculatePaymentStatus(b.dueDate, false);
+        return {
+          id: b.id,
+          type: 'bill' as const,
+          name: b.name,
+          category: b.category,
+          amount: b.amount,
+          dueDate: b.dueDate,
+          isPaid: false,
+          statusInfo,
+          originalBill: b,
+        };
+      });
+
+    // 2. Loan EMIs for active loans
+    const emiItems = loans
+      .filter((l) => l.status === 'Active' && l.nextDueDate)
+      .map((loan) => {
+        const statusInfo = calculatePaymentStatus(loan.nextDueDate, false);
+        return {
+          id: `loan_emi_${loan.id}`,
+          type: 'emi' as const,
+          name: `${loan.loanName} EMI`,
+          category: 'Bills and Utilities' as ExpenseCategory,
+          amount: loan.emiAmount,
+          dueDate: loan.nextDueDate,
+          isPaid: false,
+          statusInfo,
+          originalLoan: loan,
+        };
+      });
+
+    // Filter strictly for due within 5 days (diffDays <= 5) or overdue (diffDays < 0)
+    return [...billItems, ...emiItems]
+      .filter((item) => item.statusInfo.diffDays <= 5)
+      .sort((a, b) => a.statusInfo.diffDays - b.statusInfo.diffDays);
+  }, [upcomingBills, loans]);
+
+  // -------------------------------------------------------------
+  // Recent Transactions (Latest 4-5 transactions for the month)
+  // -------------------------------------------------------------
+  const recentTransactions = useMemo(() => {
+    return expenses
+      .filter((e) => e.monthYear === selectedMonth || e.date.startsWith(selectedMonth))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [expenses, selectedMonth]);
+
+  // Handle Pay EMI click
   const handlePayEmiClick = (loan: Loan) => {
     setPayingLoan(loan);
     setPayAmount(loan.emiAmount.toString());
@@ -194,44 +207,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     if (!isNaN(amt) && amt > 0) {
       await payEmi(payingLoan.id, amt, payDate, payNotes);
       setPayingLoan(null);
-    }
-  };
-
-  // Handle Create Loan (Bike Loan)
-  const handleCreateLoan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const emi = parseFloat(newBikeEmi);
-    const paid = parseInt(newBikePaidEmis, 10) || 0;
-    const out = parseFloat(newBikeOutstanding) || 0;
-    const day = parseInt(newBikeEmiDay, 10) || 5;
-
-    if (newBikeName.trim() && emi > 0 && out >= 0) {
-      const orig = out + paid * emi;
-      const tenure = paid + Math.max(1, Math.ceil(out / emi));
-      const nextDue = getNextDueDateFromDay(day);
-
-      await saveLoan({
-        loanName: newBikeName.trim(),
-        provider: 'Bike Loan',
-        originalAmount: orig,
-        tenureMonths: tenure,
-        emiAmount: emi,
-        startDate: newBikeStartDate,
-        endDate: '',
-        paidEmisCount: paid,
-        outstandingPrincipal: out,
-        emiDay: day,
-        nextDueDate: nextDue,
-        status: out <= 0 ? 'Completed' : 'Active',
-        notes: `EMI Day: ${day}th of every month`,
-      });
-      setIsAddLoanModalOpen(false);
-      setNewBikeName('');
-      setNewBikeEmi('');
-      setNewBikePaidEmis('0');
-      setNewBikeOutstanding('');
-      setNewBikeStartDate(getTodayDateStr());
-      setNewBikeEmiDay('5');
     }
   };
 
@@ -256,22 +231,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* ------------------------------------------------------------- */}
-      {/* 1. Header Row: Title, Month Selector & Direct "Add Expense"   */}
+      {/* 1. Header: Greeting, Current Month & Actions                  */}
       {/* ------------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-              Dashboard
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
-              Live INR (₹)
-            </span>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+            {greeting}, {userName}
+          </h1>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Overview of your expenses, loans, remaining balance, and upcoming payments
+            Overview for {getMonthDisplay(selectedMonth)} • All values in Indian Rupees (₹)
           </p>
         </div>
 
@@ -281,7 +251,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full appearance-none bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2.5 pr-8 text-xs font-semibold text-neutral-800 dark:text-neutral-200 shadow-2xs focus:outline-none cursor-pointer"
+              className="w-full appearance-none bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3.5 py-2.5 pr-8 text-xs font-semibold text-neutral-800 dark:text-neutral-200 shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value={selectedMonth}>{getMonthDisplay(selectedMonth)}</option>
               <option value="2026-10">October 2026</option>
@@ -296,29 +266,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
 
-          {/* Reset Demo Data Button */}
+          {/* Reset Demo Data */}
           <button
             onClick={() => resetToDefaultDemoData()}
-            title="Reset to default ₹48,900 salary and sample loans"
-            className="p-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs font-semibold text-neutral-600 dark:text-neutral-400 shadow-2xs transition"
+            title="Reset demo data"
+            className="p-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs font-semibold text-neutral-500 hover:text-neutral-900 dark:hover:text-white shadow-2xs transition"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Salary Calculator Quick Link */}
+          {/* Settings Quick Link */}
           <button
-            onClick={() => onNavigate('salary-calculator')}
-            title="Open Salary Calculator"
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-200 shadow-2xs transition active:scale-98"
+            onClick={() => onNavigate('settings')}
+            title="Account Settings"
+            className="p-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs font-semibold text-neutral-500 hover:text-neutral-900 dark:hover:text-white shadow-2xs transition"
           >
-            <Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">Salary Calculator</span>
+            <Settings className="w-4 h-4" />
           </button>
 
-          {/* Direct "Add Expense" Button (Explicit user requirement #5) */}
+          {/* Primary "+ Add Expense" Button */}
           <button
             onClick={onOpenAddExpense}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow transition active:scale-98"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Add Expense</span>
@@ -327,639 +296,363 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 2. Top Summary Cards                                          */}
-      {/* Total Expenses, Remaining Balance, Total Loan Amount,          */}
-      {/* Monthly EMI Total, Upcoming Reminders                         */}
+      {/* 2. Overview: Spend This Month & Remaining Balance              */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {/* Card 1: Total Expenses */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Total Expenses
-            </span>
-            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-              <Receipt className="w-4 h-4" />
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        {/* Card A: Spend This Month */}
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 tabular-nums tracking-tight">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                Spend This Month
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">
+                <Receipt className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tabular-nums tracking-tight">
               {formatINR(monthlyExpenses)}
             </div>
-            <div className="flex items-center justify-between mt-1 text-[11px] text-neutral-400">
-              <span>Today: {formatINR(todayTotalExpenses)}</span>
-              <span>{expenses.filter(e => (e.monthYear === selectedMonth || e.date.startsWith(selectedMonth)) && !e.isDebtSettlement).length} items</span>
+
+            {/* Previous Month Dynamic Comparison */}
+            <div className="mt-2 text-xs flex items-center gap-1.5">
+              {prevMonthExpenses > 0 ? (
+                <>
+                  {expenseDiff > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>+{formatINR(expenseDiff)} vs last month</span>
+                    </span>
+                  ) : expenseDiff < 0 ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <TrendingDown className="w-3.5 h-3.5" />
+                      <span>-{formatINR(Math.abs(expenseDiff))} vs last month</span>
+                    </span>
+                  ) : (
+                    <span className="text-neutral-500 font-medium">
+                      Same as last month
+                    </span>
+                  )}
+                  <span className="text-neutral-400 dark:text-neutral-600">({formatINR(prevMonthExpenses)} in {getMonthDisplay(previousMonthKey)})</span>
+                </>
+              ) : (
+                <span className="text-neutral-400 dark:text-neutral-500 font-medium">
+                  {currentMonthTransactionsCount} transactions recorded in {getMonthDisplay(selectedMonth)}
+                </span>
+              )}
             </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400">
+            <span>Today's spend: <strong className="text-neutral-700 dark:text-neutral-300 font-bold">{formatINR(todayTotalExpenses)}</strong></span>
+            <span>{currentMonthTransactionsCount} total expenses</span>
           </div>
         </div>
 
-        {/* Card 3: Remaining Balance */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Remaining Balance
-            </span>
-            <div className={`p-2 rounded-xl ${remainingBalance >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 text-rose-600'}`}>
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
+        {/* Card B: Remaining Balance */}
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between">
           <div>
-            <div
-              className={`text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${
-                remainingBalance >= 0
-                  ? 'text-emerald-700 dark:text-emerald-400'
-                  : 'text-rose-600 dark:text-rose-400'
-              }`}
-            >
-              {formatINR(remainingBalance)}
-            </div>
-            <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-neutral-400">After all outflows</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                Remaining Balance
+              </span>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                   remainingBalance >= 0
-                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
-                    : 'bg-rose-100 text-rose-800'
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
                 }`}
               >
                 {remainingBalance >= 0 ? 'Surplus' : 'Deficit'}
               </span>
             </div>
+
+            <div
+              className={`text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight ${
+                remainingBalance >= 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {formatINR(remainingBalance)}
+            </div>
+
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              From monthly income of <span className="font-semibold text-neutral-700 dark:text-neutral-300">{formatINR(monthlyIncome)}</span>
+            </p>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400">
+            <span>After expenses ({formatINR(monthlyExpenses)}) &amp; EMIs ({formatINR(monthlyEmiPaid)})</span>
+            <button
+              onClick={() => onNavigate('salary-calculator')}
+              className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline inline-flex items-center gap-0.5"
+            >
+              <span>Calculator</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Card 4: Total Loan Amount (Outstanding balance) */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Total Loan Amount
-            </span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-              <CreditCard className="w-4 h-4" />
-            </div>
-          </div>
+      {/* ------------------------------------------------------------- */}
+      {/* 3. Upcoming Due Dates – 5-Day Reminder Card                    */}
+      {/* ------------------------------------------------------------- */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-4 border-b border-neutral-100 dark:border-neutral-800">
           <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tabular-nums tracking-tight">
-              {formatINR(totalOutstandingLoans)}
-            </div>
-            <div className="flex items-center justify-between mt-1 text-[11px] text-neutral-400">
-              <span>Original: {formatINR(totalLoanAmountAll)}</span>
-              <span className="font-semibold text-emerald-600">{loans.length} Loans</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 5: Combined Monthly EMI */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Monthly EMI Total
-            </span>
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tabular-nums tracking-tight">
-              {formatINR(monthlyEmiCommitment)}
-              <span className="text-xs font-normal text-neutral-400">/mo</span>
-            </div>
-            <div className="flex items-center justify-between mt-1 text-[11px] text-neutral-400">
-              <span>Paid this mo: {formatINR(monthlyEmiPaid)}</span>
-              <span className="text-indigo-600 font-semibold">Active</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 6: Upcoming Reminders */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Due Reminders
-            </span>
-            <div className={`p-2 rounded-xl ${urgentReminders.length > 0 ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'}`}>
-              <Bell className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tabular-nums tracking-tight flex items-baseline gap-2">
-              <span>{urgentReminders.length}</span>
-              <span className="text-xs font-semibold text-neutral-400">due in ≤ 5 days</span>
-            </div>
-            <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-neutral-400">Due within 5 days</span>
-              {urgentReminders.length > 0 ? (
-                <span className="text-amber-600 dark:text-amber-400 font-bold">Action Needed</span>
-              ) : (
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">All Clear</span>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
+                Upcoming Due Dates
+              </h2>
+              {upcomingDueItems.length > 0 && (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                  {upcomingDueItems.length} due soon
+                </span>
               )}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 3. Main 2-Column Section:                                      */}
-      {/*    Left: Upcoming Payments & Due Date Reminders (due in ≤ 5 days) */}
-      {/*    Right: Active Loans & Monthly EMIs                         */}
-      {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: UPCOMING PAYMENTS & DUE DATE REMINDERS */}
-        <div className="lg:col-span-7 bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-emerald-600" />
-                <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
-                  Upcoming Payments &amp; Due Date Reminders
-                </h2>
-              </div>
-              <button
-                onClick={() => setIsAddBillModalOpen(true)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-2xs transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Bill</span>
-              </button>
-            </div>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-4">
-              Rent, credit card bills, utilities, and scheduled EMIs due in 5 days or less
-            </p>
-
-            {/* List of upcoming items due in 5 days or less */}
-            {displayedUpcomingItems.length === 0 ? (
-              <div className="py-10 text-center text-xs text-neutral-500">
-                <Clock className="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                <p className="font-semibold text-neutral-700 dark:text-neutral-300">
-                  No payments due within 5 days
-                </p>
-                <p className="mt-0.5">
-                  All clear! Payments will automatically appear here 5 days before their due date.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {displayedUpcomingItems.map((item) => {
-                  const is5DaysOrLess = !item.isPaid && item.statusInfo.diffDays <= 5;
-                  const isOverdue = !item.isPaid && item.statusInfo.diffDays < 0;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`p-3.5 sm:p-4 rounded-2xl border transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                        item.isPaid
-                          ? 'bg-neutral-50/50 dark:bg-neutral-800/30 border-neutral-200/60 dark:border-neutral-800 opacity-75'
-                          : isOverdue
-                          ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-900'
-                          : is5DaysOrLess
-                          ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800 ring-1 ring-amber-400/30'
-                          : 'bg-neutral-50/80 dark:bg-neutral-800/50 border-neutral-200/80 dark:border-neutral-700/80'
-                      }`}
-                    >
-                      {/* Name, Category, and Due Date */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shrink-0">
-                          <CategoryIcon category={item.category} className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white truncate">
-                              {item.name}
-                            </span>
-                            {item.type === 'emi' && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shrink-0">
-                                EMI
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                            <span>{item.category}</span>
-                            <span>•</span>
-                            <span className="font-mono">Due: {item.dueDate}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Amount, Status Badge, and Mark-Paid Action */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-200/50 dark:border-neutral-700/50">
-                        <div className="text-right">
-                          <div className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white tabular-nums">
-                            {formatINR(item.amount)}
-                          </div>
-                          {/* Payment Status (Req #4) */}
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${item.statusInfo.badgeColor}`}
-                          >
-                            {item.statusInfo.label}
-                          </span>
-                        </div>
-
-                        {/* Action: Mark as Paid or Undo */}
-                        {item.type === 'bill' ? (
-                          item.isPaid ? (
-                            <button
-                              onClick={() => markBillPaid(item.id, false)}
-                              title="Click to unmark"
-                              className="px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1 hover:bg-emerald-100 transition"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Paid</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => markBillPaid(item.id, true)}
-                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition active:scale-98 flex items-center gap-1"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                              <span>Pay</span>
-                            </button>
-                          )
-                        ) : (
-                          /* EMI item action */
-                          <button
-                            onClick={() => handlePayEmiClick(item.originalLoan!)}
-                            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition active:scale-98 flex items-center gap-1"
-                          >
-                            <CreditCard className="w-3.5 h-3.5" />
-                            <span>Pay EMI</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-            <span>
-              Marking a bill as paid records an expense and <strong>automatically deducts</strong> from your salary balance.
-            </span>
-            <button
-              onClick={() => onNavigate('expenses')}
-              className="text-emerald-600 font-semibold hover:underline shrink-0 ml-2"
-            >
-              View Expenses &rarr;
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: LOAN & COMBINED EMI MANAGEMENT (Req #1) */}
-        <div className="lg:col-span-5 bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
-                  Loans &amp; Monthly EMIs
-                </h2>
-              </div>
-              <button
-                onClick={() => setIsAddLoanModalOpen(true)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-2xs transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Loan</span>
-              </button>
-            </div>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-4">
-              Combined Monthly EMI: <strong className="text-indigo-600 dark:text-indigo-400">{formatINR(monthlyEmiCommitment)}/mo</strong>
-            </p>
-
-            {/* Total Loan Outstanding Banner */}
-            <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-neutral-900 to-neutral-800 text-white flex items-center justify-between shadow-xs">
-              <div>
-                <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                  Total Outstanding Loan Principal
-                </span>
-                <span className="text-xl sm:text-2xl font-black tabular-nums tracking-tight text-white">
-                  {formatINR(totalOutstandingLoans)}
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                  Combined EMI
-                </span>
-                <span className="text-base sm:text-lg font-bold text-emerald-400 tabular-nums">
-                  {formatINR(monthlyEmiCommitment)}/mo
-                </span>
-              </div>
-            </div>
-
-            {/* List of Loans */}
-            <div className="space-y-3">
-              {loans.map((loan) => {
-                const percentPaid = Math.min(
-                  100,
-                  Math.round((loan.paidEmisCount / loan.tenureMonths) * 100)
-                );
-                return (
-                  <div
-                    key={loan.id}
-                    className="p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-700/80 space-y-3"
-                  >
-                    {/* Loan Name & Bank */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
-                          {loan.loanName}
-                        </h4>
-                        <span className="text-[11px] text-neutral-400">
-                          {loan.provider || 'Bank'} • Original: {formatINR(loan.originalAmount)}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-                        {loan.status}
-                      </span>
-                    </div>
-
-                    {/* EMI Amount and Outstanding */}
-                    <div className="grid grid-cols-2 gap-2 bg-white dark:bg-neutral-900 p-2.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800">
-                      <div>
-                        <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                          Monthly EMI
-                        </span>
-                        <span className="text-sm sm:text-base font-extrabold text-indigo-600 dark:text-indigo-400 tabular-nums">
-                          {formatINR(loan.emiAmount)}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                          Outstanding
-                        </span>
-                        <span className="text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-200 tabular-nums">
-                          {formatINR(loan.outstandingPrincipal)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* EMIs Paid Count & Progress */}
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-neutral-600 dark:text-neutral-400 mb-1">
-                        <span>
-                          EMIs Already Paid: <strong className="text-emerald-600 dark:text-emerald-400">{loan.paidEmisCount}</strong> of {loan.tenureMonths}
-                        </span>
-                        <span className="font-semibold">{percentPaid}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-600 rounded-full transition-all"
-                          style={{ width: `${percentPaid}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Dates & Pay Action */}
-                    <div className="pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60 flex items-center justify-between text-[11px]">
-                      <div>
-                        <span className="text-neutral-400 block text-[10px]">Next EMI Date:</span>
-                        <span className="font-semibold text-neutral-800 dark:text-neutral-200 font-mono">
-                          {loan.nextDueDate || 'Completed'}
-                        </span>
-                      </div>
-                      {loan.status === 'Active' && (
-                        <button
-                          onClick={() => handlePayEmiClick(loan)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition active:scale-98 flex items-center gap-1"
-                        >
-                          <Check className="w-3 h-3" />
-                          <span>Pay Installment</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs">
-            <span className="text-neutral-400">
-              Total Loans Tracked: <strong className="text-neutral-700 dark:text-neutral-300">{loans.length}</strong>
-            </span>
-            <button
-              onClick={() => onNavigate('loans')}
-              className="text-emerald-600 font-semibold hover:underline"
-            >
-              Loan Manager &rarr;
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 5. Bottom Table: Recent Daily Expenses with quick search       */}
-      {/* ------------------------------------------------------------- */}
-      <div className="bg-white dark:bg-neutral-900 rounded-3xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-              Recent Daily Expenses
-            </h3>
-            <p className="text-xs text-neutral-400">
-              Transactions recorded for {getMonthDisplay(selectedMonth)} • Automatically deducted from salary
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+              Scheduled payments, EMIs, and bills due within 5 days or overdue
             </p>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Search expense or category..."
-                value={tableSearch}
-                onChange={(e) => setTableSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:border-neutral-300"
-              />
-            </div>
-
-            <button
-              onClick={onOpenAddExpense}
-              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-2xs transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Expense</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setIsAddBillModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Bill</span>
+          </button>
         </div>
 
-        {recentExpenses.length === 0 ? (
-          <div className="py-12 text-center text-xs text-neutral-500">
-            <Receipt className="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-            <p className="font-semibold text-neutral-700 dark:text-neutral-300">
-              No recent expenses found
+        {/* List of items due in <= 5 days */}
+        {upcomingDueItems.length === 0 ? (
+          <div className="py-8 text-center text-xs">
+            <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-2">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <p className="font-bold text-neutral-800 dark:text-neutral-200 text-sm">
+              No payments due within 5 days
             </p>
-            <p className="mt-0.5">Click "Add Expense" to log grocery, food, or petrol expenses.</p>
+            <p className="text-neutral-400 mt-1 max-w-sm mx-auto">
+              All your scheduled bills and loan EMIs are settled or not yet due. Payments will automatically appear here 5 days before their due date.
+            </p>
           </div>
         ) : (
-          <>
-            {/* Mobile Cards View (phones < md) */}
-            <div className="block md:hidden divide-y divide-neutral-100 dark:divide-neutral-800">
-              {recentExpenses.map((exp) => {
-                const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
-                return (
-                  <div key={exp.id} className="py-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`p-2.5 rounded-xl ${color.bg} ${color.text} shrink-0`}>
-                        <CategoryIcon category={exp.category} className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-neutral-900 dark:text-white truncate">
-                            {exp.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                          <span>{exp.category}</span>
-                          <span>•</span>
-                          <span className="font-mono">{exp.date}</span>
-                          <span>•</span>
-                          <span className="text-[10px] px-1 py-0.2 bg-neutral-100 dark:bg-neutral-800 rounded">
-                            {exp.paymentMethod}
-                          </span>
-                        </div>
-                        {exp.notes && (
-                          <p className="text-[10px] text-neutral-400 truncate mt-0.5">{exp.notes}</p>
-                        )}
-                      </div>
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800 pt-1">
+            {upcomingDueItems.map((item) => {
+              const diff = item.statusInfo.diffDays;
+              const isOverdue = diff < 0;
+              const isDueToday = diff === 0;
+
+              return (
+                <div
+                  key={item.id}
+                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                        isOverdue
+                          ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                          : isDueToday
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                          : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+                      }`}
+                    >
+                      {item.type === 'emi' ? (
+                        <CreditCard className="w-4 h-4" />
+                      ) : (
+                        <Calendar className="w-4 h-4" />
+                      )}
                     </div>
 
-                    <div className="text-right shrink-0 flex items-center gap-2">
-                      <div>
-                        <div className="text-sm font-extrabold text-neutral-900 dark:text-white tabular-nums">
-                          {formatINR(exp.amount)}
-                        </div>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium block">
-                          Deducted
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                          {item.name}
+                        </span>
+                        {/* Due status reminder badge */}
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            isOverdue
+                              ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                              : isDueToday
+                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-300'
+                              : 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60'
+                          }`}
+                        >
+                          {isOverdue
+                            ? `Overdue by ${Math.abs(diff)} day${Math.abs(diff) > 1 ? 's' : ''}`
+                            : isDueToday
+                            ? 'Due Today'
+                            : `Due in ${diff} day${diff > 1 ? 's' : ''}`}
                         </span>
                       </div>
-                      <button
-                        onClick={() => deleteExpense(exp.id)}
-                        aria-label={`Delete ${exp.name}`}
-                        className="p-2 text-neutral-400 hover:text-rose-600 active:scale-95 transition min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-rose-600" />
-                      </button>
+
+                      <div className="text-[11px] text-neutral-400 mt-1 flex items-center gap-2">
+                        <span>Due Date: {item.dueDate}</span>
+                        <span>•</span>
+                        <span>{item.type === 'emi' ? 'Loan EMI' : item.category}</span>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Desktop / Tablet Table View (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-neutral-100 dark:border-neutral-800 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-                    <th className="py-3 px-3">Expense Item</th>
-                    <th className="py-3 px-3">Category</th>
-                    <th className="py-3 px-3">Date</th>
-                    <th className="py-3 px-3">Payment Method</th>
-                    <th className="py-3 px-3 text-right">Amount</th>
-                    <th className="py-3 px-3 text-center">Status</th>
-                    <th className="py-3 px-2 text-center"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
-                  {recentExpenses.map((exp) => {
-                    const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
-                    return (
-                      <tr
-                        key={exp.id}
-                        className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 transition group"
+                  <div className="flex items-center justify-between sm:justify-end gap-3 self-end sm:self-center w-full sm:w-auto pt-1 sm:pt-0">
+                    <span className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white tabular-nums">
+                      {formatINR(item.amount)}
+                    </span>
+
+                    {item.type === 'bill' ? (
+                      <button
+                        onClick={() => markBillPaid(item.id, true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-2xs"
                       >
-                        {/* Name with category icon */}
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`p-2 rounded-xl ${color.bg} ${color.text} shrink-0`}>
-                              <CategoryIcon category={exp.category} className="w-3.5 h-3.5" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-neutral-900 dark:text-white block text-xs">
-                                {exp.name}
-                              </span>
-                              {exp.notes && (
-                                <span className="text-[10px] text-neutral-400 block truncate max-w-xs">
-                                  {exp.notes}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-                          {exp.category}
-                        </td>
-
-                        {/* Date */}
-                        <td className="py-3 px-3 text-neutral-500 font-mono whitespace-nowrap">
-                          {exp.date}
-                        </td>
-
-                        {/* Method */}
-                        <td className="py-3 px-3 text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-                          {exp.paymentMethod}
-                        </td>
-
-                        {/* Price */}
-                        <td className="py-3 px-3 text-right font-extrabold text-neutral-900 dark:text-white tabular-nums whitespace-nowrap">
-                          {formatINR(exp.amount)}
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-3 px-3 text-center whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span>Deducted</span>
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="py-3 px-2 text-center text-neutral-400">
-                          <button
-                            onClick={() => deleteExpense(exp.id)}
-                            title="Delete Expense"
-                            className="p-1 hover:text-rose-600 rounded-md transition"
-                          >
-                            &times;
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>Mark Paid</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handlePayEmiClick(item.originalLoan)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-2xs"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>Pay EMI</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* MODALS: Pay EMI, Add Loan, Add Upcoming Bill                  */}
+      {/* 4. Recent Transactions (3–5 latest)                           */}
       {/* ------------------------------------------------------------- */}
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 sm:p-6 border border-neutral-200/80 dark:border-neutral-800 shadow-xs">
+        <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
+              Recent Transactions
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+              Latest transactions for {getMonthDisplay(selectedMonth)}
+            </p>
+          </div>
 
+          <button
+            onClick={() => onNavigate('expenses')}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline min-h-[36px] px-2 py-1 rounded-lg"
+          >
+            <span>View All</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {recentTransactions.length === 0 ? (
+          <div className="py-10 text-center text-xs">
+            <Receipt className="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
+            <p className="font-bold text-neutral-800 dark:text-neutral-200 text-sm">
+              No transactions recorded yet
+            </p>
+            <p className="text-neutral-400 mt-1 max-w-sm mx-auto">
+              You haven't logged any daily expenses for {getMonthDisplay(selectedMonth)}.
+            </p>
+            <button
+              onClick={onOpenAddExpense}
+              className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add First Expense</span>
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800 pt-1">
+            {recentTransactions.map((exp) => {
+              const color = CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.Other;
+              return (
+                <div
+                  key={exp.id}
+                  className="py-3 flex items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`p-2.5 rounded-xl ${color.bg} ${color.text} shrink-0`}>
+                      <CategoryIcon category={exp.category} className="w-4 h-4" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white truncate">
+                          {exp.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 flex-wrap">
+                        <span>{exp.category}</span>
+                        <span>•</span>
+                        <span className="font-mono">{exp.date}</span>
+                        <span>•</span>
+                        <span>{exp.paymentMethod}</span>
+                      </div>
+                      {exp.notes && (
+                        <p className="text-[10px] text-neutral-400 truncate mt-0.5">
+                          {exp.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0 flex items-center gap-2">
+                    <div className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white tabular-nums">
+                      -{formatINR(exp.amount)}
+                    </div>
+
+                    <button
+                      onClick={() => deleteExpense(exp.id)}
+                      title={`Delete ${exp.name}`}
+                      className="p-1.5 text-neutral-400 hover:text-rose-600 active:scale-95 transition min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* Modals: Pay EMI Modal & Add Upcoming Bill Modal               */}
+      {/* ------------------------------------------------------------- */}
       {/* Quick Pay EMI Modal */}
       {payingLoan && (
         <Modal
           isOpen={!!payingLoan}
           onClose={() => setPayingLoan(null)}
-          title={`Pay EMI: ${payingLoan.loanName}`}
-          subtitle={`Installment of ${formatINR(payingLoan.emiAmount)} for ${payingLoan.provider}`}
+          title={`Pay EMI - ${payingLoan.loanName}`}
+          subtitle={`Installment amount: ${formatINR(payingLoan.emiAmount)}`}
         >
           <form onSubmit={handleConfirmPayEmi} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Installment Amount (₹) *
+                Amount (₹) *
               </label>
-              <input
-                type="number"
-                required
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-800"
-              />
+              <div className="relative">
+                <span className="absolute left-3.5 top-3 text-neutral-400 font-bold text-sm">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  className="w-full pl-8 pr-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-800"
+                />
+              </div>
             </div>
 
             <div>
@@ -971,159 +664,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 required
                 value={payDate}
                 onChange={(e) => setPayDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <button
-                type="button"
-                onClick={() => setPayingLoan(null)}
-                className="px-4 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
-              >
-                Confirm Payment
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Add Loan Modal */}
-      {isAddLoanModalOpen && (
-        <Modal
-          isOpen={isAddLoanModalOpen}
-          onClose={() => setIsAddLoanModalOpen(false)}
-          title="Add Bike Loan / EMI"
-          subtitle="Track bike EMI installments and remaining principal"
-        >
-          <form onSubmit={handleCreateLoan} className="space-y-4">
-            {/* 1. Bike Name */}
             <div>
               <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Bike Name *
+                Notes
               </label>
               <input
                 type="text"
-                required
-                placeholder="e.g. Royal Enfield Classic 350, Yamaha MT-15"
-                value={newBikeName}
-                onChange={(e) => setNewBikeName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-semibold bg-white dark:bg-neutral-800"
+                value={payNotes}
+                onChange={(e) => setPayNotes(e.target.value)}
+                placeholder="e.g. Paid via Auto-debit from HDFC Bank"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* 2. Monthly EMI */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Monthly EMI (₹) *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 text-neutral-400 font-semibold text-sm">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="4500"
-                    value={newBikeEmi}
-                    onChange={(e) => setNewBikeEmi(e.target.value)}
-                    className="w-full pl-8 pr-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-indigo-600 bg-white dark:bg-neutral-800"
-                  />
-                </div>
-              </div>
-
-              {/* 3. EMIs Already Paid */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  EMIs Already Paid *
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  placeholder="6"
-                  value={newBikePaidEmis}
-                  onChange={(e) => setNewBikePaidEmis(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
-                />
-              </div>
-            </div>
-
-            {/* 4. Outstanding Principal */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                Outstanding Principal (₹) *
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-neutral-400 font-semibold text-sm">
-                  ₹
-                </span>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  placeholder="68000"
-                  value={newBikeOutstanding}
-                  onChange={(e) => setNewBikeOutstanding(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold text-emerald-600 bg-white dark:bg-neutral-800"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* 5. Start Date */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Start Date *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={newBikeStartDate}
-                  onChange={(e) => setNewBikeStartDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs bg-white dark:bg-neutral-800"
-                />
-              </div>
-
-              {/* 6. Every Month EMI Day */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Every Month EMI Day (1 - 31) *
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  max="31"
-                  placeholder="5"
-                  value={newBikeEmiDay}
-                  onChange={(e) => setNewBikeEmiDay(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-bold bg-white dark:bg-neutral-800"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
               <button
                 type="button"
-                onClick={() => setIsAddLoanModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl"
+                onClick={() => setPayingLoan(null)}
+                className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl flex items-center justify-center"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
+                className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs flex items-center justify-center active:scale-95"
               >
-                Save Loan
+                Confirm EMI Payment
               </button>
             </div>
           </form>
@@ -1149,11 +719,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 placeholder="e.g. House Rent, HDFC Credit Card Bill, Electricity"
                 value={newBillName}
                 onChange={(e) => setNewBillName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                   Category *
@@ -1161,7 +731,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <select
                   value={newBillCategory}
                   onChange={(e) => setNewBillCategory(e.target.value as ExpenseCategory)}
-                  className="w-full px-3 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
+                  className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -1177,11 +747,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </label>
                 <input
                   type="number"
+                  step="any"
                   required
                   placeholder="12000"
                   value={newBillAmount}
                   onChange={(e) => setNewBillAmount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-semibold bg-white dark:bg-neutral-800"
+                  className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-semibold bg-white dark:bg-neutral-800"
                 />
               </div>
             </div>
@@ -1195,24 +766,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 required
                 value={newBillDueDate}
                 onChange={(e) => setNewBillDueDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
+                className="w-full px-3.5 py-2.5 min-h-[44px] rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm bg-white dark:bg-neutral-800"
               />
               <p className="text-[11px] text-neutral-400 mt-1">
                 A reminder will automatically appear 5 days prior to this date.
               </p>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
               <button
                 type="button"
                 onClick={() => setIsAddBillModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-xl"
+                className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl flex items-center justify-center"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
+                className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs flex items-center justify-center active:scale-95"
               >
                 Save Payment
               </button>
