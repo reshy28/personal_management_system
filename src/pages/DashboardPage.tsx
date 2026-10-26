@@ -14,7 +14,6 @@ import {
 } from '../types';
 import {
   CreditCard,
-  Wallet,
   ArrowRight,
   Plus,
   MoreHorizontal,
@@ -31,6 +30,7 @@ import {
   Sparkles,
   DollarSign,
   ShieldAlert,
+  Calculator,
 } from 'lucide-react';
 import { NavTab } from '../components/Sidebar';
 import { CategoryIcon, CATEGORY_COLORS } from '../components/CategoryIcon';
@@ -270,7 +270,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </span>
           </div>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Overview of your monthly salary, daily expenses, loans, and upcoming payments
+            Overview of your expenses, loans, remaining balance, and upcoming payments
           </p>
         </div>
 
@@ -304,6 +304,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <RotateCcw className="w-4 h-4" />
           </button>
 
+          {/* Salary Calculator Quick Link */}
+          <button
+            onClick={() => onNavigate('salary-calculator')}
+            title="Open Salary Calculator"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-200 shadow-2xs transition active:scale-98"
+          >
+            <Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden sm:inline">Salary Calculator</span>
+          </button>
+
           {/* Direct "Add Expense" Button (Explicit user requirement #5) */}
           <button
             onClick={onOpenAddExpense}
@@ -316,38 +326,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 2. Top Summary Cards (User requirement #7 + #1)              */}
-      {/* Monthly Salary, Total Expenses, Remaining Balance,            */}
-      {/* Total Loan Amount, Monthly EMI Total, Upcoming Reminders      */}
+      {/* 2. Top Summary Cards                                          */}
+      {/* Total Expenses, Remaining Balance, Total Loan Amount,          */}
+      {/* Monthly EMI Total, Upcoming Reminders                         */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {/* Card 1: Monthly Salary */}
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-              Monthly Salary
-            </span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-              <Wallet className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white tabular-nums tracking-tight">
-              {formatINR(monthlyIncome)}
-            </div>
-            <div className="flex items-center justify-between mt-1 text-[11px]">
-              <span className="text-neutral-400">Base: ₹48,900</span>
-              <button
-                onClick={onOpenQuickSalary}
-                className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Total Expenses */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {/* Card 1: Total Expenses */}
         <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">

@@ -12,6 +12,7 @@ import {
   Trash2,
   Settings,
   CheckCircle2,
+  Calculator,
 } from 'lucide-react';
 import { CategoryIcon, CATEGORY_COLORS } from '../components/CategoryIcon';
 import { NavTab } from '../components/Sidebar';
@@ -111,21 +112,35 @@ export const SalaryPage: React.FC<SalaryPageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        <div className="relative">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="appearance-none bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 pr-8 text-xs font-semibold text-neutral-800 dark:text-neutral-200 shadow-2xs focus:outline-none cursor-pointer"
-          >
-            <option value={selectedMonth}>{getMonthDisplay(selectedMonth)}</option>
-            <option value="2026-10">October 2026</option>
-            <option value="2026-09">September 2026</option>
-            <option value="2026-08">August 2026</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-neutral-400">
-            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
-              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-            </svg>
+        <div className="flex items-center gap-2">
+          {onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate('salary-calculator')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
+              title="Open Salary Calculator"
+            >
+              <Calculator className="w-4 h-4" />
+              <span>Salary Calculator</span>
+            </button>
+          )}
+
+          <div className="relative">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="appearance-none bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 pr-8 text-xs font-semibold text-neutral-800 dark:text-neutral-200 shadow-2xs focus:outline-none cursor-pointer"
+            >
+              <option value={selectedMonth}>{getMonthDisplay(selectedMonth)}</option>
+              <option value="2026-10">October 2026</option>
+              <option value="2026-09">September 2026</option>
+              <option value="2026-08">August 2026</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-neutral-400">
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
   Search,
   X,
   Sparkles,
+  Calculator,
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
@@ -21,6 +22,7 @@ export type NavTab =
   | 'expenses'
   | 'salary'
   | 'loans'
+  | 'salary-calculator'
   | 'fixed-expenses'
   | 'savings'
   | 'reports'
@@ -77,6 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const featuresMenu = [
+    {
+      id: 'salary-calculator' as NavTab,
+      label: 'Salary Calculator',
+      icon: Calculator,
+      badge: null,
+    },
     {
       id: 'fixed-expenses' as NavTab,
       label: 'Fixed Expenses',

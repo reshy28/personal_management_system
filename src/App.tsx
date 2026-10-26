@@ -14,6 +14,7 @@ import { SavingsPage } from './pages/SavingsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { BudgetsPage } from './pages/BudgetsPage';
 import { FixedExpensesPage } from './pages/FixedExpensesPage';
+import { SalaryCalculatorPage } from './pages/SalaryCalculatorPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { Loader2 } from 'lucide-react';
 import { formatINR } from './types';
@@ -147,6 +148,9 @@ const MainLayout: React.FC = () => {
             <SalaryPage onNavigate={setCurrentTab} />
           )}
           {currentTab === 'loans' && <LoansPage />}
+          {currentTab === 'salary-calculator' && (
+            <SalaryCalculatorPage onNavigate={setCurrentTab} />
+          )}
           {currentTab === 'fixed-expenses' && (
             <FixedExpensesPage onNavigate={setCurrentTab} />
           )}

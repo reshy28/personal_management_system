@@ -277,3 +277,15 @@ export function getNextDueDateFromDay(emiDay: number): string {
   return `${targetYear}-${mm}-${dd}`;
 }
 
+export interface SalaryCalculatorItem {
+  id: string;
+  name: string;
+  amount: number;
+  reminderDate: string; // YYYY-MM-DD
+  category?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+
