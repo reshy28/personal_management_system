@@ -4,9 +4,12 @@ import {
   auth,
   db,
   onAuthStateChanged,
-  loginWithGoogle,
-  loginAsGuest,
+  loginWithFixedCredentials,
   logoutUser,
+  isAuthorizedUserSession,
+  FIXED_USER_EMAIL,
+  FIXED_USER_ID,
+  AppAuthUser,
   collection,
   doc,
   setDoc,
@@ -32,7 +35,7 @@ import {
 } from '../types';
 
 interface FinanceContextType {
-  user: User | null;
+  user: AppAuthUser | User | null;
   authLoading: boolean;
   selectedMonth: string; // YYYY-MM
   setSelectedMonth: (month: string) => void;
@@ -67,6 +70,7 @@ interface FinanceContextType {
   fixedExpensesTotal: number;
 
   // Actions
+  signInFixed: (email: string, password: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
   signInGuest: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -94,7 +98,18 @@ interface FinanceContextType {
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppAuthUser | User | null>(() => {
+    if (isAuthorizedUserSession()) {
+      return {
+        uid: FIXED_USER_ID,
+        email: FIXED_USER_EMAIL,
+        displayName: 'Rasheed',
+        emailVerified: true,
+        isAnonymous: false,
+      };
+    }
+    return null;
+  });
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(getMonthYearKey(new Date()));
 
@@ -109,12 +124,38 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Listen to Auth State
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+    if (isAuthorizedUserSession()) {
+      setUser((prev) =>
+        prev || {
+          uid: FIXED_USER_ID,
+          email: FIXED_USER_EMAIL,
+          displayName: 'Rasheed',
+          emailVerified: true,
+          isAnonymous: false,
+        }
+      );
       setAuthLoading(false);
+      testConnection().catch(() => {});
+    } else {
+      setUser(null);
+      setAuthLoading(false);
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        testConnection();
+        if (!isAuthorizedUserSession()) {
+          // If unverified session, clear
+          await logoutUser();
+          setUser(null);
+        } else {
+          setUser(currentUser);
+        }
+      } else {
+        if (!isAuthorizedUserSession()) {
+          setUser(null);
+        }
       }
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -258,16 +299,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [user]);
 
   // Auth actions
+  const signInFixed = async (email: string, pass: string) => {
+    const authUser = await loginWithFixedCredentials(email, pass);
+    setUser(authUser);
+  };
+
   const signInGoogle = async () => {
-    await loginWithGoogle();
+    throw new Error('Google sign-in is disabled. Please enter your authorized email and password.');
   };
 
   const signInGuest = async () => {
-    await loginAsGuest();
+    throw new Error('Demo login is disabled. Please enter your authorized email and password.');
   };
 
   const handleSignOut = async () => {
     await logoutUser();
+    setUser(null);
   };
 
   // Seed sample starter data if user is new and has no salary or expenses yet
@@ -932,6 +979,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         fixedExpenses,
         includeFixedExpensesInSalary,
         fixedExpensesTotal,
+        signInFixed,
         signInGoogle,
         signInGuest,
         signOut: handleSignOut,

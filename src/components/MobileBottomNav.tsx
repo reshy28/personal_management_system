@@ -24,7 +24,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const activeLoansCount = loans.filter((l) => l.status === 'Active').length;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800 lg:hidden transition-colors">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800 lg:hidden transition-colors pb-[env(safe-area-inset-bottom)]">
       <div className="grid grid-cols-5 items-center h-16 max-w-md mx-auto px-2">
         {/* 1. Dashboard */}
         <button

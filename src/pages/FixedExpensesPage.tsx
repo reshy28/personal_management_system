@@ -448,7 +448,7 @@ export const FixedExpensesPage: React.FC<FixedExpensesPageProps> = ({ onNavigate
                               {item.name}
                             </span>
                             <span className="text-[10px] font-semibold uppercase text-neutral-400 block">
-                              {item.enabled ? 'Deducted from balance' : 'Disabled'}
+                              {item.enabled ? 'Active' : 'Disabled'}
                             </span>
                           </div>
                         </div>
